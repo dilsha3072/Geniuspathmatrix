@@ -43,7 +43,14 @@ function CareerCard({
         <CardDescription>{career.careerDescription}</CardDescription>
       </CardHeader>
       <CardContent className="flex-grow space-y-4">
-        <div className="text-sm text-muted-foreground" dangerouslySetInnerHTML={{ __html: career.swotAnalysis.replace(/\\n/g, '<br />') }}></div>
+        <div>
+          <h4 className="font-semibold mb-2 text-sm">Why it's a match:</h4>
+          <p className="text-sm text-muted-foreground">{career.matchExplanation}</p>
+        </div>
+        <div>
+          <h4 className="font-semibold mb-2 text-sm">SWOT Analysis:</h4>
+          <div className="text-sm text-muted-foreground" dangerouslySetInnerHTML={{ __html: career.swotAnalysis.replace(/\\n/g, '<br />') }}></div>
+        </div>
       </CardContent>
       <CardFooter className="flex justify-between">
          <Button variant="outline">View Details</Button>

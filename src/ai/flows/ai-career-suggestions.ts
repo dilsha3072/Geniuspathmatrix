@@ -30,9 +30,10 @@ const CareerSuggestionSchema = z.object({
   careerName: z.string().describe('The name of the suggested career.'),
   careerDescription: z.string().describe('A brief description of the career.'),
   swotAnalysis: z.string().describe('A SWOT analysis of the career path.'),
+  matchExplanation: z.string().describe("An explanation of why this career is a good match based on the user's assessment results (traits and constraints)."),
 });
 
-const SuggestCareersOutputSchema = z.array(CareerSuggestionSchema).describe('A list of career suggestions based on the input.');
+const SuggestCareersOutputSchema = z.array(CareerSuggestionSchema).min(10).describe('A list of at least 10 career suggestions based on the input.');
 export type SuggestCareersOutput = z.infer<typeof SuggestCareersOutputSchema>;
 
 export async function suggestCareers(input: SuggestCareersInput): Promise<SuggestCareersOutput> {
@@ -43,7 +44,7 @@ const suggestCareersPrompt = ai.definePrompt({
   name: 'suggestCareersPrompt',
   input: {schema: SuggestCareersInputSchema},
   output: {schema: SuggestCareersOutputSchema},
-  prompt: `You are an AI career advisor. Based on the following assessment results, suggest potential careers that align with the student's profile.
+  prompt: `You are an AI career advisor. Based on the following assessment results, suggest at least 10 potential careers that align with the student's profile.
 
 Personality: {{{personality}}}
 Interest: {{{interest}}}
@@ -51,7 +52,7 @@ Cognitive Abilities: {{{cognitiveAbilities}}}
 Self-Reported Skills: {{{selfReportedSkills}}}
 CVQ: {{{cvq}}}
 
-Provide a list of career suggestions, each including the career name, a brief description, and a SWOT analysis.
+For each suggestion, provide the career name, a brief description, a SWOT analysis, and a detailed explanation of why it's a good match, referencing the specific traits from the assessments and considering any constraints.
 `, 
 });
 

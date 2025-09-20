@@ -37,7 +37,10 @@ export function AppSidebar() {
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-2">
           <GraduationCap className="h-7 w-7 text-primary" />
-          <span className="font-headline text-xl font-semibold text-foreground">Path-GeniX™</span>
+          <div>
+            <span className="font-headline text-xl font-semibold text-foreground">Path-GeniX™</span>
+            <p className="text-xs text-muted-foreground">Genius Path Matrix</p>
+          </div>
         </div>
       </SidebarHeader>
       <SidebarContent className="p-2">

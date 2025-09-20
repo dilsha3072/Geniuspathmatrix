@@ -7,7 +7,6 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarFooter,
 } from '@/components/ui/sidebar';
 import { usePathname } from 'next/navigation';
 import {
@@ -15,12 +14,9 @@ import {
   ClipboardCheck,
   Compass,
   Goal,
-  Users,
+  Bot,
   FileText,
   GraduationCap,
-  Settings,
-  CircleHelp,
-  Bot,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -39,9 +35,9 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader className="p-4">
-        <div className="flex items-center gap-2 text-primary">
-          <GraduationCap className="h-7 w-7" />
-          <span className="font-headline text-xl font-semibold">Path-GeniX™</span>
+        <div className="flex items-center gap-2">
+          <GraduationCap className="h-7 w-7 text-primary" />
+          <span className="font-headline text-xl font-semibold text-foreground">Path-GeniX™</span>
         </div>
       </SidebarHeader>
       <SidebarContent className="p-2">

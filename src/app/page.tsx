@@ -1,38 +1,23 @@
 'use client';
 
 import { AppHeader } from '@/components/layout/app-header';
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { ArrowRight, Bot, CheckSquare, Compass, Goal } from 'lucide-react';
-import Link from 'next/link';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/layout/app-sidebar';
 import {
   ChartContainer,
-  ChartTooltip,
   ChartTooltipContent,
-  ChartLegend,
-  ChartLegendContent,
 } from '@/components/ui/chart';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from 'recharts';
+import type { ChartConfig } from '@/components/ui/chart';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { chartData } from '@/lib/data';
-import { Progress } from '@/components/ui/progress';
+
+const chartConfig = {
+  value: {
+    label: 'Value',
+    color: 'hsl(var(--chart-1))',
+  },
+} satisfies ChartConfig;
 
 export default function Home() {
   return (
@@ -99,8 +84,8 @@ export default function Home() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="h-[200px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={chartData}>
+                    <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+                      <BarChart accessibilityLayer data={chartData}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border)/0.5)" />
                         <XAxis dataKey="name" tick={{ fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} />
                         <YAxis tick={{ fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} />
@@ -110,7 +95,7 @@ export default function Home() {
                         />
                         <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                       </BarChart>
-                    </ResponsiveContainer>
+                    </ChartContainer>
                   </CardContent>
                 </Card>
               </div>
@@ -120,22 +105,22 @@ export default function Home() {
                   <CardTitle className="font-headline text-lg text-muted-foreground">QUICK ACTIONS</CardTitle>
                 </CardHeader>
                 <CardContent className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                  <Link href="/assessment" className="flex flex-col items-center text-center gap-2 p-4 rounded-lg hover:bg-card">
-                    <CheckSquare className="h-8 w-8 text-accent" />
-                    <span className="font-semibold text-sm">Take Assessment</span>
-                  </Link>
-                  <Link href="/assessment" className="flex flex-col items-center text-center gap-2 p-4 rounded-lg hover:bg-card">
-                    <Compass className="h-8 w-8 text-accent" />
-                    <span className="font-semibold text-sm">Explore Careers</span>
-                  </Link>
-                   <Link href="/goals" className="flex flex-col items-center text-center gap-2 p-4 rounded-lg hover:bg-card">
-                    <Goal className="h-8 w-8 text-accent" />
-                    <span className="font-semibold text-sm">Plan Your Goals</span>
-                  </Link>
-                  <Link href="/mentors" className="flex flex-col items-center text-center gap-2 p-4 rounded-lg hover:bg-card">
-                    <Bot className="h-8 w-8 text-accent" />
-                    <span className="font-semibold text-sm">Chat with Mentor</span>
-                  </Link>
+                   <div className="flex flex-col items-center text-center gap-2 p-4 rounded-lg">
+                      <div className="text-3xl font-bold font-headline text-accent">7</div>
+                      <span className="font-semibold text-sm">Completed Modules</span>
+                   </div>
+                   <div className="flex flex-col items-center text-center gap-2 p-4 rounded-lg">
+                      <div className="text-3xl font-bold font-headline text-accent">5</div>
+                      <span className="font-semibold text-sm">Suggested Careers</span>
+                   </div>
+                   <div className="flex flex-col items-center text-center gap-2 p-4 rounded-lg">
+                      <div className="text-3xl font-bold font-headline text-accent">12</div>
+                      <span className="font-semibold text-sm">Goals Created</span>
+                   </div>
+                   <div className="flex flex-col items-center text-center gap-2 p-4 rounded-lg">
+                      <div className="text-3xl font-bold font-headline text-accent">2</div>
+                      <span className="font-semibold text-sm">Mentors Connected</span>
+                   </div>
                 </CardContent>
               </Card>
             </div>

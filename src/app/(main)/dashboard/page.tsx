@@ -25,14 +25,14 @@ export default function DashboardPage() {
             </div>
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
+            <Card className="flex flex-col">
                 <CardHeader>
                 <div className="flex items-center gap-4">
                     <CheckSquare className="h-8 w-8 text-primary" />
                     <CardTitle className="font-headline text-xl">InsightX Assessment</CardTitle>
                 </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="flex-grow">
                 <CardDescription>
                     Understand who you are. Take our scientific diagnostic tests to uncover your personality, interests, and skills.
                 </CardDescription>
@@ -44,14 +44,14 @@ export default function DashboardPage() {
                 </CardContent>
             </Card>
 
-            <Card>
+            <Card className="flex flex-col">
                 <CardHeader>
                 <div className="flex items-center gap-4">
                     <Compass className="h-8 w-8 text-primary" />
                     <CardTitle className="font-headline text-xl">PathXplore Career</CardTitle>
                 </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="flex-grow">
                 <CardDescription>
                     Explore careers that truly fit. Our AI engine matches your profile to the top 5 career options.
                 </CardDescription>
@@ -63,14 +63,14 @@ export default function DashboardPage() {
                 </CardContent>
             </Card>
 
-            <Card>
+            <Card className="flex flex-col">
                 <CardHeader>
                 <div className="flex items-center gap-4">
                     <Goal className="h-8 w-8 text-primary" />
                     <CardTitle className="font-headline text-xl">GoalMint Planner</CardTitle>
                 </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="flex-grow">
                 <CardDescription>
                     Design your SMART career plan. Convert your chosen career path into actionable 1, 3, and 5-year plans.
                 </CardDescription>
@@ -82,14 +82,14 @@ export default function DashboardPage() {
                 </CardContent>
             </Card>
 
-            <Card>
+            <Card className="flex flex-col">
                 <CardHeader>
                 <div className="flex items-center gap-4">
                     <Bot className="h-8 w-8 text-primary" />
                     <CardTitle className="font-headline text-xl">MentorSuite AI</CardTitle>
                 </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="flex-grow">
                 <CardDescription>
                     Grow with expert guidance. Chat with our AI Mentor to get reflective questions and career advice.
                 </CardDescription>

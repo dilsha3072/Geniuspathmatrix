@@ -2,11 +2,10 @@
 
 import Link from 'next/link';
 import { AppHeader } from '@/components/layout/app-header';
-import { AppSidebar } from '@/components/layout/app-sidebar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { ArrowRight, Bot, ClipboardCheck, Compass, Goal } from 'lucide-react';
+import MainLayout from './(main)/layout';
 
 const featureCards = [
     {
@@ -41,47 +40,42 @@ const featureCards = [
 
 export default function Home() {
   return (
-    <SidebarProvider defaultOpen={true}>
-      <AppSidebar />
-      <SidebarInset>
-        <div className="flex min-h-svh flex-1 flex-col">
-            <AppHeader title="Home" showAuthButtons={true} />
-            <main className="flex-1 p-8 md:p-10 lg:p-12">
-                <div className="mx-auto max-w-7xl space-y-12">
-                    <div className="space-y-4">
-                        <h1 className="text-4xl font-bold font-headline tracking-tight text-foreground">Welcome to Your Career Journey</h1>
-                        <p className="text-lg text-muted-foreground max-w-3xl">
-                            Path-GeniX™ is here to guide you through a structured, personalized, and metacognitive career discovery journey. Let's start building your future, today.
-                        </p>
-                        <Button size="lg" asChild className="font-semibold">
-                           <Link href="/assessment">Begin Your Journey <ArrowRight /></Link>
-                        </Button>
-                    </div>
-
-                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                        {featureCards.map((card) => (
-                            <Card key={card.title} className="flex flex-col">
-                                <CardHeader className="flex-row items-start gap-4">
-                                    {card.icon}
-                                    <CardTitle className="font-headline text-xl">{card.title}</CardTitle>
-                                </CardHeader>
-                                <CardContent className="flex-grow">
-                                    <CardDescription>{card.description}</CardDescription>
-                                </CardContent>
-                                <CardFooter>
-                                    <Button asChild className="w-full">
-                                        <Link href={card.link}>
-                                            {card.linkText} <ArrowRight className="ml-2"/>
-                                        </Link>
-                                    </Button>
-                                </CardFooter>
-                            </Card>
-                        ))}
-                    </div>
+    <MainLayout>
+        <AppHeader title="Home" showAuthButtons={true} />
+        <main className="flex-1 p-8 md:p-10 lg:p-12">
+            <div className="mx-auto max-w-7xl space-y-12">
+                <div className="space-y-4">
+                    <h1 className="text-4xl font-bold font-headline tracking-tight text-foreground">Welcome to Your Career Journey</h1>
+                    <p className="text-lg text-muted-foreground max-w-3xl">
+                        Path-GeniX™ is here to guide you through a structured, personalized, and metacognitive career discovery journey. Let's start building your future, today.
+                    </p>
+                    <Button size="lg" asChild className="font-semibold">
+                       <Link href="/assessment">Begin Your Journey <ArrowRight /></Link>
+                    </Button>
                 </div>
-            </main>
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+                    {featureCards.map((card) => (
+                        <Card key={card.title} className="flex flex-col">
+                            <CardHeader className="flex-row items-start gap-4">
+                                {card.icon}
+                                <CardTitle className="font-headline text-xl">{card.title}</CardTitle>
+                            </CardHeader>
+                            <CardContent className="flex-grow">
+                                <CardDescription>{card.description}</CardDescription>
+                            </CardContent>
+                            <CardFooter>
+                                <Button asChild className="w-full">
+                                    <Link href={card.link}>
+                                        {card.linkText} <ArrowRight className="ml-2"/>
+                                    </Link>
+                                </Button>
+                            </CardFooter>
+                        </Card>
+                    ))}
+                </div>
+            </div>
+        </main>
+    </MainLayout>
   );
 }

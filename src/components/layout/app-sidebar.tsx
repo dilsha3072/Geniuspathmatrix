@@ -11,22 +11,24 @@ import {
 } from '@/components/ui/sidebar';
 import { usePathname } from 'next/navigation';
 import {
-  LayoutDashboard,
-  ClipboardList,
-  Target,
-  Users,
-  LifeBuoy,
-  Settings,
+  Home,
+  ClipboardCheck,
   Compass,
+  Goal,
+  Bot,
+  FileText,
+  GraduationCap,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
 const navItems = [
-  { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { href: '/assessment', icon: ClipboardList, label: 'Assessment' },
-  { href: '/goals', icon: Target, label: 'Goal Planning' },
-  { href: '/mentors', icon: Users, label: 'Mentor Suite' },
+  { href: '/dashboard', icon: Home, label: 'Home' },
+  { href: '/assessment', icon: ClipboardCheck, label: 'InsightX Assessment' },
+  { href: '/pathxplore', icon: Compass, label: 'PathXplore Career' },
+  { href: '/goals', icon: Goal, label: 'GoalMint Planner' },
+  { href: '/mentors', icon: Bot, label: 'MentorSuite AI' },
+  { href: '/reports', icon: FileText, label: 'Reports' },
 ];
 
 export function AppSidebar() {
@@ -36,12 +38,10 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="shrink-0" asChild>
-            <Link href="/dashboard">
-              <Compass className="text-primary" />
-            </Link>
-          </Button>
-          <span className="font-headline text-lg font-semibold">Path-GeniX</span>
+           <div className="flex items-center gap-2 text-primary">
+              <GraduationCap className="h-7 w-7" />
+              <span className="font-headline text-lg font-semibold">Path-GeniX™</span>
+            </div>
         </div>
       </SidebarHeader>
       <SidebarContent className="p-2">
@@ -62,20 +62,6 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton tooltip={{ children: 'Help', side: 'right' }}>
-              <LifeBuoy />
-              <span>Help</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton tooltip={{ children: 'Settings', side: 'right' }}>
-              <Settings />
-              <span>Settings</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
   );

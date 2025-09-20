@@ -14,6 +14,25 @@ import { ArrowRight, Bot, CheckSquare, Compass, Goal } from 'lucide-react';
 import Link from 'next/link';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/layout/app-sidebar';
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+} from '@/components/ui/chart';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts';
+import { chartData } from '@/lib/data';
+import { Progress } from '@/components/ui/progress';
 
 export default function Home() {
   return (
@@ -21,110 +40,106 @@ export default function Home() {
       <AppSidebar />
       <SidebarInset>
         <div className="flex min-h-0 flex-1 flex-col">
-          <AppHeader title="Home" showAuthButtons={true} />
-          <main className="flex-1 space-y-8 bg-background p-4 md:p-6 lg:p-12">
+          <div className="bg-gradient-to-r from-[#1E63C5] to-[#2F80ED] text-white">
+            <AppHeader title="Dashboard" showAuthButtons={true} />
+            <main className="p-4 md:p-6 lg:p-12">
+              <div className="mx-auto max-w-7xl">
+                <div className="mb-4">
+                  <h1 className="text-3xl font-bold font-headline tracking-tight">
+                    Hello, Alex!
+                  </h1>
+                  <p className="text-lg text-sky-200">
+                    Here's a summary of your career journey progress
+                  </p>
+                </div>
+              </div>
+            </main>
+          </div>
+          <div className="flex-1 space-y-8 bg-background p-4 md:p-6 lg:p-12">
             <div className="mx-auto max-w-7xl space-y-8">
-              <div className="space-y-4">
-                <h1 className="text-4xl font-bold font-headline tracking-tight">
-                  Welcome to Your Career Journey
-                </h1>
-                <p className="text-lg text-muted-foreground max-w-3xl">
-                  Path-GeniX™ is here to guide you through a structured, personalized, and metacognitive career discovery journey. Let's start building your future, today.
-                </p>
-                <Button size="lg" asChild>
-                  <Link href="/assessment">
-                    Begin Your Journey <ArrowRight className="ml-2 h-4 w-4" />
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <Card className="flex flex-col text-center items-center">
+                  <CardHeader className="items-center">
+                    <CardTitle className="font-headline text-lg text-muted-foreground">
+                      CAREER PROGRESS
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex-grow flex flex-col items-center justify-center">
+                    <div className="relative h-32 w-32">
+                      <svg className="h-full w-full" viewBox="0 0 36 36">
+                        <path
+                          className="text-gray-700"
+                          strokeWidth="3"
+                          fill="none"
+                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                        ></path>
+                        <path
+                          className="text-primary"
+                          strokeWidth="3"
+                          strokeDasharray="60, 100"
+                          strokeLinecap="round"
+                          fill="none"
+                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                        ></path>
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-3xl font-bold">60%</span>
+                      </div>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-4">
+                      Completed
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card className="md:col-span-2">
+                  <CardHeader>
+                    <CardTitle className="font-headline text-lg text-muted-foreground">
+                      SKILLS ANALYSIS
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="h-[200px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border)/0.5)" />
+                        <XAxis dataKey="name" tick={{ fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} />
+                        <YAxis tick={{ fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} />
+                        <Tooltip
+                          cursor={{ fill: 'hsl(var(--card))' }}
+                          content={<ChartTooltipContent indicator="dot" />}
+                        />
+                        <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="font-headline text-lg text-muted-foreground">QUICK ACTIONS</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+                  <Link href="/assessment" className="flex flex-col items-center text-center gap-2 p-4 rounded-lg hover:bg-card">
+                    <CheckSquare className="h-8 w-8 text-accent" />
+                    <span className="font-semibold text-sm">Take Assessment</span>
                   </Link>
-                </Button>
-              </div>
-
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                <Card className="flex flex-col text-center items-center">
-                  <CardHeader className="items-center">
-                    <CheckSquare className="h-8 w-8 mb-4 shrink-0 text-primary" />
-                    <CardTitle className="font-headline text-lg">
-                      InsightX Assessment
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex-grow">
-                    <p className="text-sm text-muted-foreground">
-                      Understand who you are. Take our scientific diagnostic tests to uncover your personality, interests, and skills.
-                    </p>
-                  </CardContent>
-                  <CardFooter className="mt-auto">
-                    <Button variant="ghost" asChild className="text-sm font-semibold">
-                      <Link href="/assessment">
-                        Start Assessment <ArrowRight className="ml-2 h-4 w-4" />
-                      </Link>
-                    </Button>
-                  </CardFooter>
-                </Card>
-
-                <Card className="flex flex-col text-center items-center">
-                  <CardHeader className="items-center">
-                    <Compass className="h-8 w-8 mb-4 shrink-0 text-primary" />
-                    <CardTitle className="font-headline text-lg">
-                      PathXplore Career
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex-grow">
-                     <p className="text-sm text-muted-foreground">
-                      Explore careers that truly fit. Our AI engine matches your profile to the top 5 career options.
-                    </p>
-                  </CardContent>
-                  <CardFooter className="mt-auto">
-                    <Button variant="ghost" asChild className="text-sm font-semibold">
-                      <Link href="/assessment">
-                        Explore Careers <ArrowRight className="ml-2 h-4 w-4" />
-                      </Link>
-                    </Button>
-                  </CardFooter>
-                </Card>
-
-                <Card className="flex flex-col text-center items-center">
-                  <CardHeader className="items-center">
-                    <Goal className="h-8 w-8 mb-4 shrink-0 text-primary" />
-                    <CardTitle className="font-headline text-lg">
-                      GoalMint Planner
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex-grow">
-                     <p className="text-sm text-muted-foreground">
-                      Design your SMART career plan. Convert your chosen career path into actionable 1, 3, and 5-year plans.
-                    </p>
-                  </CardContent>
-                  <CardFooter className="mt-auto">
-                    <Button variant="ghost" asChild className="text-sm font-semibold">
-                      <Link href="/goals">
-                        Plan Your Goals <ArrowRight className="ml-2 h-4 w-4" />
-                      </Link>
-                    </Button>
-                  </CardFooter>
-                </Card>
-
-                <Card className="flex flex-col text-center items-center">
-                  <CardHeader className="items-center">
-                    <Bot className="h-8 w-8 mb-4 shrink-0 text-primary" />
-                     <CardTitle className="font-headline text-lg">
-                      MentorSuite AI
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex-grow">
-                    <p className="text-sm text-muted-foreground">
-                      Grow with expert guidance. Chat with our AI Mentor to get reflective questions and career advice.
-                    </p>
-                  </CardContent>
-                  <CardFooter className="mt-auto">
-                    <Button variant="ghost" asChild className="text-sm font-semibold">
-                      <Link href="/mentors">
-                        Chat with Mentor <ArrowRight className="ml-2 h-4 w-4" />
-                      </Link>
-                    </Button>
-                  </CardFooter>
-                </Card>
-              </div>
+                  <Link href="/assessment" className="flex flex-col items-center text-center gap-2 p-4 rounded-lg hover:bg-card">
+                    <Compass className="h-8 w-8 text-accent" />
+                    <span className="font-semibold text-sm">Explore Careers</span>
+                  </Link>
+                   <Link href="/goals" className="flex flex-col items-center text-center gap-2 p-4 rounded-lg hover:bg-card">
+                    <Goal className="h-8 w-8 text-accent" />
+                    <span className="font-semibold text-sm">Plan Your Goals</span>
+                  </Link>
+                  <Link href="/mentors" className="flex flex-col items-center text-center gap-2 p-4 rounded-lg hover:bg-card">
+                    <Bot className="h-8 w-8 text-accent" />
+                    <span className="font-semibold text-sm">Chat with Mentor</span>
+                  </Link>
+                </CardContent>
+              </Card>
             </div>
-          </main>
+          </div>
         </div>
       </SidebarInset>
     </SidebarProvider>

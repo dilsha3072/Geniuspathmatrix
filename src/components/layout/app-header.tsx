@@ -9,9 +9,9 @@ type AppHeaderProps = {
 
 export function AppHeader({ title, showAuthButtons = false }: AppHeaderProps) {
   return (
-    <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
+    <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b border-secondary/50 bg-transparent px-4 backdrop-blur-sm sm:px-6">
       <SidebarTrigger className="md:hidden" />
-      <h1 className="text-xl md:text-2xl font-bold font-headline">{title}</h1>
+      <h1 className="text-xl md:text-2xl font-bold font-headline text-white">{title}</h1>
       {showAuthButtons && (
         <div className="ml-auto flex items-center gap-2">
             <Button variant="ghost" asChild>

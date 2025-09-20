@@ -1,3 +1,4 @@
+
 import type { Mentor, Goal, CareerPath } from './types';
 
 export const mentors: Mentor[] = [

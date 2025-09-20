@@ -1,3 +1,4 @@
+
 import type { SwotAnalysisOutput, SuggestCareersOutput } from "@/ai/flows/ai-career-suggestions";
 
 export type CareerSuggestion = SuggestCareersOutput[0];

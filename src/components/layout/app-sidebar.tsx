@@ -20,33 +20,28 @@ import {
   GraduationCap,
   Settings,
   CircleHelp,
+  Bot,
 } from 'lucide-react';
 import Link from 'next/link';
 
 const navItems = [
-  { href: '/', icon: Home, label: 'Dashboard' },
-  { href: '/assessment', icon: ClipboardCheck, label: 'Assessment' },
-  { href: '/goals', icon: Goal, label: 'Goal Plan' },
-  { href: '/mentors', icon: Users, label: 'Mentors' },
+  { href: '/', icon: Home, label: 'Home' },
+  { href: '/assessment', icon: ClipboardCheck, label: 'InsightX Assessment' },
+  { href: '/pathxplore', icon: Compass, label: 'PathXplore Career' },
+  { href: '/goals', icon: Goal, label: 'GoalMint Planner' },
+  { href: '/mentors', icon: Bot, label: 'MentorSuite AI' },
   { href: '/reports', icon: FileText, label: 'Reports' },
 ];
-
-const bottomNavItems = [
-    { href: '/help', icon: CircleHelp, label: 'Help' },
-    { href: '/settings', icon: Settings, label: 'Settings' },
-]
 
 export function AppSidebar() {
   const pathname = usePathname();
 
   return (
     <Sidebar>
-      <SidebarHeader>
-        <div className="flex items-center gap-2">
-           <div className="flex items-center gap-2 text-primary">
-              <GraduationCap className="h-7 w-7" />
-              <span className="font-headline text-lg font-semibold">Path-GeniX</span>
-            </div>
+      <SidebarHeader className="p-4">
+        <div className="flex items-center gap-2 text-primary">
+          <GraduationCap className="h-7 w-7" />
+          <span className="font-headline text-xl font-semibold">Path-GeniX™</span>
         </div>
       </SidebarHeader>
       <SidebarContent className="p-2">
@@ -56,7 +51,6 @@ export function AppSidebar() {
               <SidebarMenuButton
                 asChild
                 isActive={pathname === item.href}
-                tooltip={{ children: item.label, side: 'right' }}
               >
                 <Link href={item.href}>
                   <item.icon />
@@ -67,24 +61,6 @@ export function AppSidebar() {
           ))}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter className="p-2">
-         <SidebarMenu>
-            {bottomNavItems.map((item) => (
-                <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={pathname === item.href}
-                    tooltip={{ children: item.label, side: 'right' }}
-                  >
-                    <Link href={item.href}>
-                      <item.icon />
-                      <span>{item.label}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-            ))}
-        </SidebarMenu>
-      </SidebarFooter>
     </Sidebar>
   );
 }

@@ -14,14 +14,6 @@ export interface Goal {
   dueDate: Date;
 }
 
-export interface Mentor {
-  id: string;
-  name: string;
-  title:string;
-  specialties: string[];
-  imageId: string;
-}
-
 export interface CareerPath {
     id: string;
     title: string;

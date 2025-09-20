@@ -1,36 +1,5 @@
 
-import type { Mentor, Goal, CareerPath } from './types';
-
-export const mentors: Mentor[] = [
-  {
-    id: '1',
-    name: 'Dr. Anya Sharma',
-    title: 'AI & Machine Learning Lead',
-    specialties: ['Artificial Intelligence', 'Data Science', 'Academia'],
-    imageId: 'mentor-1',
-  },
-  {
-    id: '2',
-    name: 'Ben Carter',
-    title: 'Senior Software Engineer @ Google',
-    specialties: ['Software Development', 'Cloud Computing', 'Career Growth'],
-    imageId: 'mentor-2',
-  },
-  {
-    id: '3',
-    name: 'Chloe Davis',
-    title: 'UX/UI Design Director',
-    specialties: ['Product Design', 'User Experience', 'Creative Leadership'],
-    imageId: 'mentor-3',
-  },
-  {
-    id: '4',
-    name: 'David Rodriguez',
-    title: 'Startup Founder & CEO',
-    specialties: ['Entrepreneurship', 'Business Strategy', 'Venture Capital'],
-    imageId: 'mentor-4',
-  },
-];
+import type { Goal, CareerPath } from './types';
 
 export const goals: { [key: string]: Goal[] } = {
   '1-year': [

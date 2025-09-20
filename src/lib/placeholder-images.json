@@ -5,30 +5,6 @@
       "description": "A student looking thoughtfully towards a bright future, symbolizing career exploration.",
       "imageUrl": "https://picsum.photos/seed/path-genix-hero/1200/800",
       "imageHint": "student future"
-    },
-    {
-      "id": "mentor-1",
-      "description": "A friendly and professional mentor, Dr. Anya Sharma.",
-      "imageUrl": "https://picsum.photos/seed/mentor1/400/400",
-      "imageHint": "professional portrait"
-    },
-    {
-      "id": "mentor-2",
-      "description": "An experienced mentor in a tech field, Ben Carter.",
-      "imageUrl": "https://picsum.photos/seed/mentor2/400/400",
-      "imageHint": "mentor tech"
-    },
-    {
-      "id": "mentor-3",
-      "description": "A creative industries mentor, Chloe Davis.",
-      "imageUrl": "https://picsum.photos/seed/mentor3/400/400",
-      "imageHint": "creative professional"
-    },
-    {
-      "id": "mentor-4",
-      "description": "A mentor specializing in business and entrepreneurship, David Rodriguez.",
-      "imageUrl": "https://picsum.photos/seed/mentor4/400/400",
-      "imageHint": "business person"
     }
   ]
 }

@@ -2,6 +2,7 @@
 'use client';
 
 import * as React from 'react';
+import { useRouter } from 'next/navigation';
 import { AppHeader } from '@/components/layout/app-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,11 +10,10 @@ import { Progress } from '@/components/ui/progress';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { LoadingSpinner } from '@/components/loading-spinner';
-import { getCareerSuggestions, generateSwotAnalysis } from '@/lib/actions';
-import type { CareerSuggestion, SwotAnalysis } from '@/lib/types';
+import { getCareerSuggestions } from '@/lib/actions';
+import type { CareerSuggestion } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { AlertCircle, ArrowLeft, ArrowRight, Lightbulb, ThumbsDown, ThumbsUp, Zap, Clock } from 'lucide-react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertCircle, ArrowLeft, ArrowRight, Clock } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const assessmentSections = [
@@ -179,111 +179,6 @@ const assessmentQuestions = {
   ]
 };
 
-function SwotDialog({ career, skills }: { career: CareerSuggestion, skills: string }) {
-  const [analysis, setAnalysis] = React.useState<SwotAnalysis | null>(null);
-  const [isLoading, setIsLoading] = React.useState(false);
-  const { toast } = useToast();
-
-  const handleOpen = async () => {
-    if (analysis) return;
-    setIsLoading(true);
-    const result = await generateSwotAnalysis({ careerName: career.careerName, studentSkills: skills.split(',') });
-    if (result.success) {
-      setAnalysis(result.data);
-    } else {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: result.error,
-      });
-    }
-    setIsLoading(false);
-  };
-
-  return (
-    <Dialog onOpenChange={(open) => open && handleOpen()}>
-      <DialogTrigger asChild>
-        <Button variant="secondary">View SWOT Analysis</Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle className="font-headline text-2xl">SWOT Analysis: {career.careerName}</DialogTitle>
-          <DialogDescription>
-            An AI-generated analysis based on your profile.
-          </DialogDescription>
-        </DialogHeader>
-        {isLoading ? (
-          <div className="flex items-center justify-center h-48">
-            <LoadingSpinner className="h-8 w-8" />
-          </div>
-        ) : analysis ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
-            <Card>
-              <CardHeader className="flex-row gap-4 items-center">
-                <ThumbsUp className="h-8 w-8 text-green-500" />
-                <CardTitle>Strengths</CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm text-muted-foreground">{analysis.strengths}</CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex-row gap-4 items-center">
-                <ThumbsDown className="h-8 w-8 text-red-500" />
-                <CardTitle>Weaknesses</CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm text-muted-foreground">{analysis.weaknesses}</CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex-row gap-4 items-center">
-                <Lightbulb className="h-8 w-8 text-blue-500" />
-                <CardTitle>Opportunities</CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm text-muted-foreground">{analysis.opportunities}</CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex-row gap-4 items-center">
-                <Zap className="h-8 w-8 text-yellow-500" />
-                <CardTitle>Threats</CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm text-muted-foreground">{analysis.threats}</CardContent>
-            </Card>
-          </div>
-        ) : <p>Could not load analysis.</p>}
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function CareerResults({ suggestions, userSkills, onReset }: { suggestions: CareerSuggestion[], userSkills: string, onReset: () => void }) {
-  return (
-    <div className="space-y-8">
-       <div className="text-center space-y-2">
-          <h2 className="text-3xl font-bold font-headline tracking-tight">Your AI-Matched Careers</h2>
-          <p className="text-muted-foreground">Based on your assessment, here are your top career suggestions.</p>
-        </div>
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {suggestions.map((career) => (
-          <Card key={career.careerName} className="flex flex-col">
-            <CardHeader>
-              <CardTitle className="font-headline">{career.careerName}</CardTitle>
-              <CardDescription className="line-clamp-3">{career.careerDescription}</CardDescription>
-            </CardHeader>
-            <CardContent className="flex-grow">
-               <div className="text-sm text-muted-foreground" dangerouslySetInnerHTML={{ __html: career.swotAnalysis.replace(/\\n/g, '<br />') }}></div>
-            </CardContent>
-            <CardFooter className="flex justify-between">
-               <Button>View Details</Button>
-               <SwotDialog career={career} skills={userSkills} />
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
-      <div className="text-center">
-         <Button variant="outline" onClick={onReset}>Take Assessment Again</Button>
-      </div>
-    </div>
-  );
-}
-
 function Timer({ minutes, onTimeUp }: { minutes: number; onTimeUp: () => void }) {
   const [seconds, setSeconds] = React.useState(minutes * 60);
 
@@ -349,6 +244,7 @@ function QuestionCard({
 }
 
 export default function AssessmentPage() {
+  const router = useRouter();
   const [currentStep, setCurrentStep] = React.useState(0);
   const [answers, setAnswers] = React.useState<Record<string, Record<string, string>>>({
     personality: {},
@@ -358,7 +254,6 @@ export default function AssessmentPage() {
     cvq: {},
   });
   const [isLoading, setIsLoading] = React.useState(false);
-  const [results, setResults] = React.useState<CareerSuggestion[] | null>(null);
   const { toast } = useToast();
 
   const handleNext = () => setCurrentStep(prev => Math.min(prev + 1, totalSteps));
@@ -388,20 +283,30 @@ export default function AssessmentPage() {
     const result = await getCareerSuggestions(formattedAnswers);
     
     if (result.success && result.data) {
-      setResults(result.data);
-      setCurrentStep(totalSteps); // Move to results screen
+      // Store results and redirect
+      try {
+        localStorage.setItem('assessmentResults', JSON.stringify(result.data));
+        router.push('/pathxplore');
+      } catch (e) {
+        toast({
+          variant: 'destructive',
+          title: 'Could not save results',
+          description: 'Your browser seems to have private browsing enabled, which prevents saving your results. Please disable it and try again.',
+        });
+        setIsLoading(false);
+      }
     } else {
       toast({
         variant: 'destructive',
         title: 'Something went wrong',
         description: result.error || 'Could not generate career suggestions. Please try again.',
       });
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
   
   const resetAssessment = () => {
-    setResults(null);
+    localStorage.removeItem('assessmentResults');
     setCurrentStep(0);
     setAnswers({ personality: {}, interest: {}, cognitiveAbilities: {}, selfReportedSkills: {}, cvq: {} });
   }
@@ -411,13 +316,19 @@ export default function AssessmentPage() {
       const sectionIndex = currentStep - 1;
       const section = assessmentSections[sectionIndex];
       let questionsContent;
+      let questionNumberOffset = 0;
+      if (sectionIndex > 0) {
+        for(let i=0; i<sectionIndex; i++) {
+          questionNumberOffset += assessmentSections[i].questions;
+        }
+      }
       
       switch(section.id) {
         case 'personality':
           questionsContent = assessmentQuestions.personality.map((q, i) => (
             <QuestionCard 
               key={q.id}
-              question={{ ...q, question: `${i + 1}. ${q.question}`}}
+              question={{ ...q, question: `${questionNumberOffset + i + 1}. ${q.question}`}}
               options={ratingLabels.personality}
               selectedValue={answers.personality[q.id]}
               onChange={(v) => handleAnswerChange('personality', q.id, v)} 
@@ -428,7 +339,7 @@ export default function AssessmentPage() {
           questionsContent = assessmentQuestions.interest.map((q, i) => (
             <QuestionCard 
               key={q.id}
-              question={{ ...q, question: `${i + 1}. ${q.question}`}}
+              question={{ ...q, question: `${questionNumberOffset + i + 1}. ${q.question}`}}
               options={ratingLabels.interest}
               selectedValue={answers.interest[q.id]}
               onChange={(v) => handleAnswerChange('interest', q.id, v)} 
@@ -447,7 +358,7 @@ export default function AssessmentPage() {
                     return (
                       <QuestionCard 
                         key={q.id}
-                        question={{...q, question: `${cognitiveQuestionCounter}. ${q.question}`}}
+                        question={{...q, question: `${questionNumberOffset + cognitiveQuestionCounter}. ${q.question}`}}
                         options={[]} // options are in the question object for MCQ
                         selectedValue={answers.cognitiveAbilities[q.id]}
                         onChange={(v) => handleAnswerChange('cognitiveAbilities', q.id, v)} 
@@ -464,7 +375,7 @@ export default function AssessmentPage() {
                     return (
                       <QuestionCard 
                         key={q.id}
-                        question={{...q, question: `${cognitiveQuestionCounter}. ${q.question}`}}
+                        question={{...q, question: `${questionNumberOffset + cognitiveQuestionCounter}. ${q.question}`}}
                         options={ratingLabels.skillMapping}
                         selectedValue={answers.selfReportedSkills[q.id]}
                         onChange={(v) => handleAnswerChange('selfReportedSkills', q.id, v)} 
@@ -492,7 +403,7 @@ export default function AssessmentPage() {
                 return (
                   <QuestionCard 
                     key={q.id}
-                    question={{ ...q, question: `${questionCounter}. ${q.question}`}}
+                    question={{ ...q, question: `${questionNumberOffset + questionCounter}. ${q.question}`}}
                     options={ratingLabels.cvq}
                     selectedValue={answers.cvq[q.id]}
                     onChange={(v) => handleAnswerChange('cvq', q.id, v)} 
@@ -582,8 +493,6 @@ export default function AssessmentPage() {
               <h2 className="text-2xl font-bold font-headline">Analyzing Your Profile...</h2>
               <p className="text-muted-foreground max-w-md">Our AI is crunching the numbers to find your perfect career matches. This might take a moment.</p>
            </div>
-        ) : results ? (
-           <CareerResults suggestions={results} userSkills={selfReportedSkillsString} onReset={resetAssessment} />
         ) : (
           <div className="max-w-4xl mx-auto space-y-8">
             {currentStep > 0 && currentStep <= assessmentSections.length && (
@@ -618,3 +527,5 @@ export default function AssessmentPage() {
     </div>
   );
 }
+
+    

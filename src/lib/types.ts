@@ -1,5 +1,7 @@
 
-import type { SwotAnalysisOutput, SuggestCareersOutput } from "@/ai/flows/ai-career-suggestions";
+import type { SuggestCareersOutput } from "@/ai/flows/ai-career-suggestions";
+import type { SwotAnalysisOutput } from "@/ai/flows/swot-analysis-for-career";
+
 
 export type CareerSuggestion = SuggestCareersOutput[0];
 export type SwotAnalysis = SwotAnalysisOutput;

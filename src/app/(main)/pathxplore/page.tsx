@@ -26,6 +26,17 @@ function CareerCard({
   career: CareerSuggestion;
   isTopPick?: boolean;
 }) {
+  // A simple function to format SWOT analysis text into HTML
+  const formatSwot = (text: string) => {
+    return text
+      .replace(/(\*\*Strengths:\*\*|Strengths:)/g, '<strong>Strengths:</strong>')
+      .replace(/(\*\*Weaknesses:\*\*|Weaknesses:)/g, '<strong>Weaknesses:</strong>')
+      .replace(/(\*\*Opportunities:\*\*|Opportunities:)/g, '<strong>Opportunities:</strong>')
+      .replace(/(\*\*Threats:\*\*|Threats:)/g, '<strong>Threats:</strong>')
+      .replace(/\* /g, '<li>')
+      .replace(/\n/g, '</li>') + '</li>'; // Close the last item
+  };
+
   return (
     <Card
       className='flex flex-col'
@@ -49,7 +60,7 @@ function CareerCard({
         </div>
         <div>
           <h4 className="font-semibold mb-2 text-sm">SWOT Analysis:</h4>
-          <div className="text-sm text-muted-foreground prose" dangerouslySetInnerHTML={{ __html: career.swotAnalysis.replace(/\n/g, '<br />') }}></div>
+          <ul className="text-sm text-muted-foreground list-disc pl-5 space-y-1" dangerouslySetInnerHTML={{ __html: formatSwot(career.swotAnalysis) }}></ul>
         </div>
       </CardContent>
       <CardFooter className="flex justify-between">

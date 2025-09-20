@@ -69,7 +69,7 @@ export default function Home() {
                                     <CardDescription>{card.description}</CardDescription>
                                 </CardContent>
                                 <CardFooter>
-                                    <Button variant="link" asChild className="p-0 font-semibold text-primary">
+                                    <Button asChild className="w-full">
                                         <Link href={card.link}>
                                             {card.linkText} <ArrowRight className="ml-2"/>
                                         </Link>

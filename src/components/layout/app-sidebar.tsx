@@ -24,7 +24,7 @@ import {
 import Link from 'next/link';
 
 const navItems = [
-  { href: '/dashboard', icon: Home, label: 'Dashboard' },
+  { href: '/', icon: Home, label: 'Dashboard' },
   { href: '/assessment', icon: ClipboardCheck, label: 'Assessment' },
   { href: '/goals', icon: Goal, label: 'Goal Plan' },
   { href: '/mentors', icon: Users, label: 'Mentors' },

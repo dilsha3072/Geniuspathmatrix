@@ -2,9 +2,11 @@ import type { Metadata } from 'next';
 import { Toaster } from '@/components/ui/toaster';
 import './globals.css';
 import { cn } from '@/lib/utils';
+import { SidebarProvider } from '@/components/ui/sidebar';
+import { AppSidebar } from '@/components/layout/app-sidebar';
 
 export const metadata: Metadata = {
-  title: 'Path-GeniX™',
+  title: 'Path-GeniX',
   description: 'Guiding students through a structured, four-step career discovery journey.',
 };
 

@@ -414,57 +414,64 @@ export default function AssessmentPage() {
       
       switch(section.id) {
         case 'personality':
-          questionsContent = assessmentQuestions.personality.map((q, i) => 
-             <QuestionCard 
-                key={q.id}
-                question={{ ...q, question: `${i + 1}. ${q.question}`}}
-                options={ratingLabels.personality}
-                selectedValue={answers.personality[q.id]}
-                onChange={(v) => handleAnswerChange('personality', q.id, v)} 
-             />
-          );
+          questionsContent = assessmentQuestions.personality.map((q, i) => (
+            <QuestionCard 
+              key={q.id}
+              question={{ ...q, question: `${i + 1}. ${q.question}`}}
+              options={ratingLabels.personality}
+              selectedValue={answers.personality[q.id]}
+              onChange={(v) => handleAnswerChange('personality', q.id, v)} 
+            />
+          ));
           break;
         case 'interest':
-          questionsContent = assessmentQuestions.interest.map((q, i) => 
+          questionsContent = assessmentQuestions.interest.map((q, i) => (
             <QuestionCard 
-               key={q.id}
-               question={{ ...q, question: `${i + 1}. ${q.question}`}}
-               options={ratingLabels.interest}
-               selectedValue={answers.interest[q.id]}
-               onChange={(v) => handleAnswerChange('interest', q.id, v)} 
+              key={q.id}
+              question={{ ...q, question: `${i + 1}. ${q.question}`}}
+              options={ratingLabels.interest}
+              selectedValue={answers.interest[q.id]}
+              onChange={(v) => handleAnswerChange('interest', q.id, v)} 
             />
-         );
+          ));
           break;
         case 'cognitive': // This is the combined Cognitive + Skill mapping section
+          let cognitiveQuestionCounter = 0;
           questionsContent = (
             <div className="space-y-8">
               <div>
                 <h3 className="font-bold text-xl mb-4">Part A: Cognitive Capability</h3>
                 <div className="space-y-6">
-                  {assessmentQuestions.cognitive.map((q, i) => 
-                    <QuestionCard 
-                      key={q.id}
-                      question={{...q, question: `${i+1}. ${q.question}`}}
-                      options={[]} // options are in the question object for MCQ
-                      selectedValue={answers.cognitiveAbilities[q.id]}
-                      onChange={(v) => handleAnswerChange('cognitiveAbilities', q.id, v)} 
-                    />
-                  )}
+                  {assessmentQuestions.cognitive.map((q) => {
+                    cognitiveQuestionCounter++;
+                    return (
+                      <QuestionCard 
+                        key={q.id}
+                        question={{...q, question: `${cognitiveQuestionCounter}. ${q.question}`}}
+                        options={[]} // options are in the question object for MCQ
+                        selectedValue={answers.cognitiveAbilities[q.id]}
+                        onChange={(v) => handleAnswerChange('cognitiveAbilities', q.id, v)} 
+                      />
+                    )
+                  })}
                 </div>
               </div>
               <div className="border-t pt-8">
-                 <h3 className="font-bold text-xl mb-4">Part B: Skill Mapping</h3>
-                 <div className="space-y-6">
-                  {assessmentQuestions.skillMapping.map((q, i) =>
-                    <QuestionCard 
-                      key={q.id}
-                      question={{...q, question: `${i + assessmentQuestions.cognitive.length + 1}. ${q.question}`}}
-                      options={ratingLabels.skillMapping}
-                      selectedValue={answers.selfReportedSkills[q.id]}
-                      onChange={(v) => handleAnswerChange('selfReportedSkills', q.id, v)} 
-                    />
-                  )}
-                 </div>
+                <h3 className="font-bold text-xl mb-4">Part B: Skill Mapping</h3>
+                <div className="space-y-6">
+                  {assessmentQuestions.skillMapping.map((q) => {
+                    cognitiveQuestionCounter++;
+                    return (
+                      <QuestionCard 
+                        key={q.id}
+                        question={{...q, question: `${cognitiveQuestionCounter}. ${q.question}`}}
+                        options={ratingLabels.skillMapping}
+                        selectedValue={answers.selfReportedSkills[q.id]}
+                        onChange={(v) => handleAnswerChange('selfReportedSkills', q.id, v)} 
+                      />
+                    )
+                  })}
+                </div>
               </div>
             </div>
           );

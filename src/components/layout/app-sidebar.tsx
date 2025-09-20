@@ -22,7 +22,6 @@ import {
   CircleHelp,
 } from 'lucide-react';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
 
 const navItems = [
   { href: '/dashboard', icon: Home, label: 'Dashboard' },
@@ -54,15 +53,16 @@ export function AppSidebar() {
         <SidebarMenu>
           {navItems.map((item) => (
             <SidebarMenuItem key={item.href}>
-              <Link href={item.href} legacyBehavior passHref>
-                <SidebarMenuButton
-                  isActive={pathname === item.href}
-                  tooltip={{ children: item.label, side: 'right' }}
-                >
+              <SidebarMenuButton
+                asChild
+                isActive={pathname === item.href}
+                tooltip={{ children: item.label, side: 'right' }}
+              >
+                <Link href={item.href}>
                   <item.icon />
                   <span>{item.label}</span>
-                </SidebarMenuButton>
-              </Link>
+                </Link>
+              </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
         </SidebarMenu>
@@ -71,15 +71,16 @@ export function AppSidebar() {
          <SidebarMenu>
             {bottomNavItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
-                <Link href={item.href} legacyBehavior passHref>
-                    <SidebarMenuButton
+                  <SidebarMenuButton
+                    asChild
                     isActive={pathname === item.href}
                     tooltip={{ children: item.label, side: 'right' }}
-                    >
-                    <item.icon />
-                    <span>{item.label}</span>
-                    </SidebarMenuButton>
-                </Link>
+                  >
+                    <Link href={item.href}>
+                      <item.icon />
+                      <span>{item.label}</span>
+                    </Link>
+                  </SidebarMenuButton>
                 </SidebarMenuItem>
             ))}
         </SidebarMenu>

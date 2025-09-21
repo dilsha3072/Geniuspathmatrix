@@ -6,7 +6,7 @@ import { AppHeader } from '@/components/layout/app-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import type { GoalPlan } from '@/lib/types';
+import type { CareerSuggestion, GoalPlan } from '@/lib/types';
 import { PlusCircle, BookOpen, Wrench, Users, Bot, Star } from 'lucide-react';
 import {
   Accordion,
@@ -30,6 +30,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { getGeneratedGoals } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/loading-spinner';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 const categoryIcons = {
   Academic: <BookOpen className="h-5 w-5 text-blue-500" />,
@@ -75,7 +77,7 @@ function GoalCategory({ title, goals, icon }: { title: "Academic" | "Skill" | "N
     );
 }
 
-function GeneratePlanDialog({ onPlanGenerated }: { onPlanGenerated: (plan: GoalPlan) => void }) {
+function GeneratePlanDialog({ onPlanGenerated, careerSuggestions }: { onPlanGenerated: (plan: GoalPlan) => void, careerSuggestions: CareerSuggestion[] | null }) {
   const [open, setOpen] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const { toast } = useToast();
@@ -83,15 +85,30 @@ function GeneratePlanDialog({ onPlanGenerated }: { onPlanGenerated: (plan: GoalP
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsLoading(true);
+
+    if (!careerSuggestions) {
+      toast({
+        variant: 'destructive',
+        title: 'Assessment Required',
+        description: 'Please complete the assessment before generating a goal plan.',
+      });
+      setIsLoading(false);
+      return;
+    }
+
     const formData = new FormData(event.currentTarget);
     const careerName = formData.get('careerName') as string;
-    const studentProfile = formData.get('studentProfile') as string;
     const timeframes = (formData.get('timeframes') as string)
       .split(',')
       .map(t => t.trim().toLowerCase().replace(' ', '-'))
       .filter(t => t);
 
-    if (!careerName || !studentProfile || timeframes.length === 0) {
+    // Create a student profile summary from assessment results
+    const topCareer = careerSuggestions[0];
+    const studentProfile = `Top career match: ${topCareer.careerName}. Match explanation: ${topCareer.matchExplanation}. SWOT Analysis: ${topCareer.swotAnalysis}`;
+
+
+    if (!careerName || timeframes.length === 0) {
       toast({
         variant: 'destructive',
         title: 'Missing Information',
@@ -132,21 +149,24 @@ function GeneratePlanDialog({ onPlanGenerated }: { onPlanGenerated: (plan: GoalP
         <DialogHeader>
           <DialogTitle>Generate Your GoalMint™ Plan</DialogTitle>
           <DialogDescription>
-            Tell our AI about your career choice to build a personalized roadmap.
+            Tell our AI about your career choice to build a personalized roadmap. Your plan will be based on your assessment results.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4 py-4">
+          {!careerSuggestions && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>No Assessment Data Found</AlertTitle>
+              <AlertDescription>
+                You must complete the InsightX assessment before a plan can be generated.
+              </AlertDescription>
+            </Alert>
+          )}
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="careerName" className="text-right">
               Career
             </Label>
-            <Input id="careerName" name="careerName" placeholder="e.g., Software Engineer" className="col-span-3" />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="studentProfile" className="text-right">
-              Your Profile
-            </Label>
-            <Textarea id="studentProfile" name="studentProfile" placeholder="Briefly describe your skills, interests, and personality." className="col-span-3" />
+            <Input id="careerName" name="careerName" placeholder="e.g., Software Engineer" defaultValue={careerSuggestions?.[0]?.careerName || ''} className="col-span-3" />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="timeframes" className="text-right">
@@ -155,7 +175,7 @@ function GeneratePlanDialog({ onPlanGenerated }: { onPlanGenerated: (plan: GoalP
             <Input id="timeframes" name="timeframes" placeholder="e.g., 1 year, 3 years, 10 years" className="col-span-3" defaultValue="1-year, 3-year, 5-year" />
           </div>
           <DialogFooter>
-            <Button type="submit" disabled={isLoading}>
+            <Button type="submit" disabled={isLoading || !careerSuggestions}>
               {isLoading && <LoadingSpinner className="mr-2" />}
               Generate Plan
             </Button>
@@ -168,6 +188,18 @@ function GeneratePlanDialog({ onPlanGenerated }: { onPlanGenerated: (plan: GoalP
 
 export default function GoalsPage() {
   const [goals, setGoals] = React.useState<GoalPlan | null>(null);
+  const [careerSuggestions, setCareerSuggestions] = React.useState<CareerSuggestion[] | null>(null);
+
+  React.useEffect(() => {
+    const storedResults = localStorage.getItem('assessmentResults');
+    if (storedResults) {
+      try {
+        setCareerSuggestions(JSON.parse(storedResults));
+      } catch (e) {
+        console.error("Failed to parse assessment results from localStorage", e);
+      }
+    }
+  }, []);
 
   const goalPlans = goals ? Object.entries(goals).map(([period, goals]) => ({
     period: period,
@@ -192,13 +224,13 @@ export default function GoalsPage() {
                       <PlusCircle className="mr-2 h-4 w-4" />
                       New Goal
                   </Button>
-                  <GeneratePlanDialog onPlanGenerated={setGoals} />
+                  <GeneratePlanDialog onPlanGenerated={setGoals} careerSuggestions={careerSuggestions} />
                 </div>
             </div>
           
           {hasGoals ? (
             <Tabs defaultValue={goalPlans[0].period} className="w-full">
-              <TabsList className={`grid w-full grid-cols-${goalPlans.length}`}>
+              <TabsList className={`grid w-full grid-cols-${goalPlans.length > 0 ? goalPlans.length : 1}`}>
                 {goalPlans.map((plan) => (
                   <TabsTrigger key={plan.period} value={plan.period}>
                     {plan.title}
@@ -232,7 +264,7 @@ export default function GoalsPage() {
                 <CardDescription className="mt-2 mb-6 max-w-sm mx-auto">
                     Your GoalMint™ Plan is currently empty. Use the AI Goal Builder to generate a personalized action plan based on your career choice.
                 </CardDescription>
-                <GeneratePlanDialog onPlanGenerated={setGoals} />
+                <GeneratePlanDialog onPlanGenerated={setGoals} careerSuggestions={careerSuggestions} />
              </Card>
           )}
         </div>

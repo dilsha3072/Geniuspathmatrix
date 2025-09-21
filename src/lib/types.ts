@@ -13,8 +13,7 @@ export interface Goal {
   id: string;
   title: string;
   category: 'Academic' | 'Skill' | 'Networking';
-  completed: boolean;
-  dueDate: Date;
+  description: string;
 }
 
 export interface CareerPath {

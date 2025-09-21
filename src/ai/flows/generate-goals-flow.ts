@@ -4,7 +4,7 @@
  *
  * - generateGoalsForCareer - A function that generates the goal plan.
  * - GenerateGoalsInput - The input type for the generateGoalsForCareer function.
- * - GenerateGoalsOutput - The return type for the generateGoalsForCareer function.
+ * - GenerateGoalsOutput - The return type for the generateGoalsFor-Career function.
  */
 
 import {ai} from '@/ai/genkit';
@@ -12,7 +12,7 @@ import {z} from 'genkit';
 
 const GenerateGoalsInputSchema = z.object({
   careerName: z.string().describe('The name of the career to generate a goal plan for.'),
-  studentProfile: z.string().describe("A summary of the student's profile, including skills, interests, and personality traits."),
+  studentProfile: z.string().describe("A summary of the student's profile, including their top career match, match explanation, and SWOT analysis. This provides the context for their strengths, interests, and potential challenges."),
   timeframes: z.array(z.string()).describe("A list of timeframes for the goal plan, e.g., ['1-year', '3-year', '10-year']."),
 });
 export type GenerateGoalsInput = z.infer<typeof GenerateGoalsInputSchema>;
@@ -20,7 +20,7 @@ export type GenerateGoalsInput = z.infer<typeof GenerateGoalsInputSchema>;
 const GoalSchema = z.object({
   title: z.string().describe('The specific, measurable, achievable, relevant, and time-bound (SMART) goal.'),
   category: z.enum(['Academic', 'Skill', 'Networking']).describe('The category of the goal.'),
-  description: z.string().describe('A brief description of the goal and why it is important for the career path.'),
+  description: z.string().describe('A brief description of the goal and why it is important for the career path, referencing the student\'s profile.'),
 });
 
 const GenerateGoalsOutputSchema = z.record(z.array(GoalSchema)).describe('An object where keys are the timeframes (e.g., "1-year") and values are arrays of SMART goals for that timeframe.');
@@ -36,14 +36,14 @@ const prompt = ai.definePrompt({
   output: {schema: GenerateGoalsOutputSchema},
   prompt: `You are an expert career planner who specializes in creating actionable roadmaps for students.
 
-Based on the student's chosen career, their profile, and the requested timeframes, generate a comprehensive SMART GoalMint™ Plan.
+Based on the student's chosen career, their detailed profile (including SWOT analysis and career match explanation), and the requested timeframes, generate a comprehensive SMART GoalMint™ Plan.
 
 For each timeline provided in the 'timeframes' array (e.g., {{{timeframes}}}), create a set of specific, measurable, achievable, relevant, and time-bound (SMART) goals. These goals must fall into one of three categories: 'Academic', 'Skill', or 'Networking'.
 
-Include concrete action items like specific courses to take, skills to develop, projects to build, certifications to earn, or networking events to attend.
+The goals should be highly personalized, leveraging the student's strengths and addressing their weaknesses as outlined in their profile. Include concrete action items like specific courses to take, skills to develop, projects to build, certifications to earn, or networking events to attend.
 
 Career: {{{careerName}}}
-Student Profile: {{{studentProfile}}}
+Student Profile Context: {{{studentProfile}}}
 
 Generate the plan for the specified timeframes.
 `,

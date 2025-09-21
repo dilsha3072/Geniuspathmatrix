@@ -9,11 +9,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Progress } from '@/components/ui/progress';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { LoadingSpinner } from '@/components/loading-spinner';
-import { getCareerSuggestions } from '@/lib/actions';
+import { getCareerSuggestions, sendParentQuiz } from '@/lib/actions';
 import type { CareerSuggestion } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { AlertCircle, ArrowLeft, ArrowRight, Clock } from 'lucide-react';
+import { AlertCircle, ArrowLeft, ArrowRight, Clock, Mail } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const assessmentSections = [
@@ -259,6 +260,10 @@ export default function AssessmentPage() {
     cvq: {},
   });
   const [isLoading, setIsLoading] = React.useState(false);
+  const [isSendingQuiz, setIsSendingQuiz] = React.useState(false);
+  const [age, setAge] = React.useState('');
+  const [parentEmail, setParentEmail] = React.useState('');
+  const [parentPhone, setParentPhone] = React.useState('');
   const { toast } = useToast();
 
   const handleNext = () => setCurrentStep(prev => Math.min(prev + 1, totalSteps));
@@ -272,6 +277,24 @@ export default function AssessmentPage() {
         [questionId]: value,
       },
     }));
+  };
+  
+  const handleSendParentQuiz = async () => {
+    setIsSendingQuiz(true);
+    const result = await sendParentQuiz({ email: parentEmail, phone: parentPhone });
+    if (result.success) {
+        toast({
+            title: 'Quiz Sent!',
+            description: result.message || 'The parent quiz has been sent successfully.',
+        });
+    } else {
+        toast({
+            variant: 'destructive',
+            title: 'Failed to Send',
+            description: result.error || 'Could not send the parent quiz. Please check the contact details.',
+        });
+    }
+    setIsSendingQuiz(false);
   };
 
   const handleSubmit = async () => {
@@ -443,7 +466,7 @@ export default function AssessmentPage() {
 
     const totalQuestions = assessmentSections.reduce((total, section) => total + section.questions, 0);
     const totalTime = assessmentSections.reduce((total, section) => total + section.time, 0);
-
+    const isUnder18 = age ? parseInt(age, 10) < 18 : false;
 
     return (
         <Card>
@@ -452,6 +475,16 @@ export default function AssessmentPage() {
                 <CardDescription>For students of 13-19 age group: Discover Your Unique Potential</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+                <div>
+                  <h3 className="font-semibold mb-2">Your Information:</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="age">Your Age</Label>
+                      <Input id="age" type="number" placeholder="e.g., 16" value={age} onChange={(e) => setAge(e.target.value)} />
+                    </div>
+                  </div>
+                </div>
+
                 <div>
                     <h3 className="font-semibold mb-2">General Instructions:</h3>
                     <ul className="list-disc list-inside text-sm text-muted-foreground space-y-2">
@@ -478,6 +511,34 @@ export default function AssessmentPage() {
                         ))}
                     </div>
                 </div>
+                
+                {isUnder18 && (
+                   <Card className="bg-muted/50">
+                     <CardHeader>
+                       <CardTitle>Parent Quiz (Optional)</CardTitle>
+                       <CardDescription>
+                         For a more complete profile, you can invite a parent or guardian to answer a few questions. This is completely optional and will not affect your primary results.
+                       </CardDescription>
+                     </CardHeader>
+                     <CardContent className="grid sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="parent-email">Parent's Email</Label>
+                          <Input id="parent-email" type="email" placeholder="parent@example.com" value={parentEmail} onChange={e => setParentEmail(e.target.value)} />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="parent-phone">Parent's Phone (WhatsApp/SMS)</Label>
+                          <Input id="parent-phone" type="tel" placeholder="+1234567890" value={parentPhone} onChange={e => setParentPhone(e.target.value)} />
+                        </div>
+                     </CardContent>
+                     <CardFooter>
+                       <Button onClick={handleSendParentQuiz} disabled={isSendingQuiz || (!parentEmail && !parentPhone)}>
+                         {isSendingQuiz ? <LoadingSpinner className="mr-2" /> : <Mail className="mr-2" />}
+                         Send Parent Quiz
+                       </Button>
+                     </CardFooter>
+                   </Card>
+                )}
+
                  <Alert>
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>Honesty is Key!</AlertTitle>
@@ -487,14 +548,13 @@ export default function AssessmentPage() {
                 </Alert>
             </CardContent>
              <CardFooter>
-                <Button onClick={handleNext} className="w-full" size="lg">Start Assessment</Button>
+                <Button onClick={handleNext} className="w-full" size="lg" disabled={!age}>Start Assessment</Button>
             </CardFooter>
         </Card>
     );
   };
 
   const isLastStep = currentStep === assessmentSections.length;
-  const selfReportedSkillsString = Object.entries(answers.selfReportedSkills).map(([k, v]) => `${k}:${v}`).join(' ');
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -540,5 +600,3 @@ export default function AssessmentPage() {
     </div>
   );
 }
-
-    

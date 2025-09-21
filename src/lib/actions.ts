@@ -33,3 +33,18 @@ export async function getGeneratedGoals(input: GenerateGoalsInput) {
         return { success: false, error: 'Failed to generate goals.' };
     }
 }
+
+export async function sendParentQuiz(parentContact: { email?: string, phone?: string }) {
+  // TODO: Implement actual email/SMS sending logic here.
+  // This is a placeholder to simulate the action.
+  console.log('Simulating sending parent quiz to:', parentContact);
+  if (!parentContact.email && !parentContact.phone) {
+    return { success: false, error: 'No contact information provided.' };
+  }
+  // In a real app, you would generate a unique, secure link to the /parent-quiz page.
+  const quizLink = '/parent-quiz'; 
+  console.log(`(Pretend) Sending link ${quizLink} to parent.`);
+  
+  // Simulate success
+  return { success: true, message: 'Parent quiz sent successfully!' };
+}

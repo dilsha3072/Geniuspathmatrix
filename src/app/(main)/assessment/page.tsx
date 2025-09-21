@@ -268,6 +268,9 @@ export default function AssessmentPage() {
   const [isSendingQuiz, setIsSendingQuiz] = React.useState(false);
   const [dob, setDob] = React.useState<Date | undefined>();
   const [gender, setGender] = React.useState('');
+  const [classOfStudy, setClassOfStudy] = React.useState('');
+  const [place, setPlace] = React.useState('');
+  const [schoolOrCollege, setSchoolOrCollege] = React.useState('');
   const [parentEmail, setParentEmail] = React.useState('');
   const [parentPhone, setParentPhone] = React.useState('');
   const { toast } = useToast();
@@ -399,6 +402,21 @@ export default function AssessmentPage() {
                                 </SelectContent>
                             </Select>
                         </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                         <div className="space-y-2">
+                            <Label htmlFor="class-of-study">Class of Study</Label>
+                            <Input id="class-of-study" placeholder="e.g., 10th Grade, Freshman" value={classOfStudy} onChange={e => setClassOfStudy(e.target.value)} />
+                        </div>
+                         <div className="space-y-2">
+                            <Label htmlFor="place">Place</Label>
+                            <Input id="place" placeholder="e.g., New York, Mumbai" value={place} onChange={e => setPlace(e.target.value)} />
+                        </div>
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="school-college">School / College</Label>
+                        <Input id="school-college" placeholder="Enter the name of your institution" value={schoolOrCollege} onChange={e => setSchoolOrCollege(e.target.value)} />
                     </div>
                      
                     {isUnder18 && (
@@ -655,5 +673,3 @@ export default function AssessmentPage() {
     </div>
   );
 }
-
-    

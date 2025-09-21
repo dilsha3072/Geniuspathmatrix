@@ -14,8 +14,13 @@ import { LoadingSpinner } from '@/components/loading-spinner';
 import { getCareerSuggestions, sendParentQuiz } from '@/lib/actions';
 import type { CareerSuggestion } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { AlertCircle, ArrowLeft, ArrowRight, Clock, Mail } from 'lucide-react';
+import { AlertCircle, ArrowLeft, ArrowRight, CalendarIcon, Clock, Mail } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
+import { format, differenceInYears } from 'date-fns';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const assessmentSections = [
   {
@@ -48,7 +53,7 @@ const assessmentSections = [
   },
 ];
 
-const totalSteps = assessmentSections.length + 1; // +1 for the initial instructions screen
+const totalSteps = assessmentSections.length + 2; // +1 for instructions, +1 for general info
 
 const ratingLabels = {
   personality: [
@@ -261,7 +266,8 @@ export default function AssessmentPage() {
   });
   const [isLoading, setIsLoading] = React.useState(false);
   const [isSendingQuiz, setIsSendingQuiz] = React.useState(false);
-  const [age, setAge] = React.useState('');
+  const [dob, setDob] = React.useState<Date | undefined>();
+  const [gender, setGender] = React.useState('');
   const [parentEmail, setParentEmail] = React.useState('');
   const [parentPhone, setParentPhone] = React.useState('');
   const { toast } = useToast();
@@ -340,8 +346,94 @@ export default function AssessmentPage() {
   }
 
   const renderStep = () => {
-    if (currentStep > 0 && currentStep <= assessmentSections.length) {
-      const sectionIndex = currentStep - 1;
+    if (currentStep === 1) { // General Information Step
+        const isUnder18 = dob ? differenceInYears(new Date(), dob) < 18 : false;
+
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle className="font-headline text-2xl">General Information</CardTitle>
+                    <CardDescription>Please provide some basic information about yourself.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <Label htmlFor="dob">Date of Birth</Label>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant={"outline"}
+                                className={cn(
+                                  "w-full justify-start text-left font-normal",
+                                  !dob && "text-muted-foreground"
+                                )}
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {dob ? format(dob, "PPP") : <span>Pick a date</span>}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                              <Calendar
+                                mode="single"
+                                selected={dob}
+                                onSelect={setDob}
+                                initialFocus
+                                captionLayout="dropdown-buttons"
+                                fromYear={new Date().getFullYear() - 30}
+                                toYear={new Date().getFullYear() - 10}
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="gender">Gender</Label>
+                            <Select onValueChange={setGender} value={gender}>
+                                <SelectTrigger id="gender">
+                                    <SelectValue placeholder="Select your gender" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="male">Male</SelectItem>
+                                    <SelectItem value="female">Female</SelectItem>
+                                    <SelectItem value="other">Other</SelectItem>
+                                    <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                     
+                    {isUnder18 && (
+                       <Card className="bg-muted/50">
+                         <CardHeader>
+                           <CardTitle>Parent Quiz (Optional)</CardTitle>
+                           <CardDescription>
+                             For a more complete profile, you can invite a parent or guardian to answer a few questions. This is completely optional and will not affect your primary results.
+                           </CardDescription>
+                         </CardHeader>
+                         <CardContent className="grid sm:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="parent-email">Parent's Email</Label>
+                              <Input id="parent-email" type="email" placeholder="parent@example.com" value={parentEmail} onChange={e => setParentEmail(e.target.value)} />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="parent-phone">Parent's Phone (WhatsApp/SMS)</Label>
+                              <Input id="parent-phone" type="tel" placeholder="+1234567890" value={parentPhone} onChange={e => setParentPhone(e.target.value)} />
+                            </div>
+                         </CardContent>
+                         <CardFooter>
+                           <Button onClick={handleSendParentQuiz} disabled={isSendingQuiz || (!parentEmail && !parentPhone)}>
+                             {isSendingQuiz ? <LoadingSpinner className="mr-2" /> : <Mail className="mr-2" />}
+                             Send Parent Quiz
+                           </Button>
+                         </CardFooter>
+                       </Card>
+                    )}
+                </CardContent>
+            </Card>
+        );
+    }
+      
+    if (currentStep > 1 && currentStep <= assessmentSections.length + 1) {
+      const sectionIndex = currentStep - 2;
       const section = assessmentSections[sectionIndex];
       let questionsContent;
       let questionNumberOffset = 0;
@@ -466,7 +558,6 @@ export default function AssessmentPage() {
 
     const totalQuestions = assessmentSections.reduce((total, section) => total + section.questions, 0);
     const totalTime = assessmentSections.reduce((total, section) => total + section.time, 0);
-    const isUnder18 = age ? parseInt(age, 10) < 18 : false;
 
     return (
         <Card>
@@ -475,16 +566,6 @@ export default function AssessmentPage() {
                 <CardDescription>For students of 13-19 age group: Discover Your Unique Potential</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-                <div>
-                  <h3 className="font-semibold mb-2">Your Information:</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="age">Your Age</Label>
-                      <Input id="age" type="number" placeholder="e.g., 16" value={age} onChange={(e) => setAge(e.target.value)} />
-                    </div>
-                  </div>
-                </div>
-
                 <div>
                     <h3 className="font-semibold mb-2">General Instructions:</h3>
                     <ul className="list-disc list-inside text-sm text-muted-foreground space-y-2">
@@ -512,33 +593,6 @@ export default function AssessmentPage() {
                     </div>
                 </div>
                 
-                {isUnder18 && (
-                   <Card className="bg-muted/50">
-                     <CardHeader>
-                       <CardTitle>Parent Quiz (Optional)</CardTitle>
-                       <CardDescription>
-                         For a more complete profile, you can invite a parent or guardian to answer a few questions. This is completely optional and will not affect your primary results.
-                       </CardDescription>
-                     </CardHeader>
-                     <CardContent className="grid sm:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="parent-email">Parent's Email</Label>
-                          <Input id="parent-email" type="email" placeholder="parent@example.com" value={parentEmail} onChange={e => setParentEmail(e.target.value)} />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="parent-phone">Parent's Phone (WhatsApp/SMS)</Label>
-                          <Input id="parent-phone" type="tel" placeholder="+1234567890" value={parentPhone} onChange={e => setParentPhone(e.target.value)} />
-                        </div>
-                     </CardContent>
-                     <CardFooter>
-                       <Button onClick={handleSendParentQuiz} disabled={isSendingQuiz || (!parentEmail && !parentPhone)}>
-                         {isSendingQuiz ? <LoadingSpinner className="mr-2" /> : <Mail className="mr-2" />}
-                         Send Parent Quiz
-                       </Button>
-                     </CardFooter>
-                   </Card>
-                )}
-
                  <Alert>
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>Honesty is Key!</AlertTitle>
@@ -548,13 +602,14 @@ export default function AssessmentPage() {
                 </Alert>
             </CardContent>
              <CardFooter>
-                <Button onClick={handleNext} className="w-full" size="lg" disabled={!age}>Start Assessment</Button>
+                <Button onClick={handleNext} className="w-full" size="lg">Start Assessment</Button>
             </CardFooter>
         </Card>
     );
   };
-
-  const isLastStep = currentStep === assessmentSections.length;
+  
+  const isLastAssessmentStep = currentStep === assessmentSections.length + 1;
+  const isGeneralInfoStep = currentStep === 1;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -568,26 +623,26 @@ export default function AssessmentPage() {
            </div>
         ) : (
           <div className="max-w-4xl mx-auto space-y-8">
-            {currentStep > 0 && currentStep <= assessmentSections.length && (
+            {currentStep > 1 && currentStep <= assessmentSections.length + 1 && (
                 <div className="space-y-4">
-                  <Progress value={(currentStep / assessmentSections.length) * 100} className="w-full" />
-                  <p className="text-center text-sm text-muted-foreground">Section {currentStep} of {assessmentSections.length}</p>
+                  <Progress value={((currentStep - 1) / assessmentSections.length) * 100} className="w-full" />
+                  <p className="text-center text-sm text-muted-foreground">Section {currentStep - 1} of {assessmentSections.length}</p>
                 </div>
             )}
             
             {renderStep()}
             
-            {currentStep > 0 && currentStep <= assessmentSections.length && (
+            {currentStep > 0 && currentStep <= assessmentSections.length + 1 && (
                 <div className="flex justify-between items-center mt-6">
-                    <Button variant="outline" onClick={handleBack} disabled={currentStep === 1}>
+                    <Button variant="outline" onClick={handleBack} disabled={currentStep === 0}>
                         <ArrowLeft className="mr-2 h-4 w-4" /> Back
                     </Button>
-                    {isLastStep ? (
+                    {isLastAssessmentStep ? (
                         <Button onClick={handleSubmit} disabled={isLoading} size="lg">
                             {isLoading ? <LoadingSpinner className="mr-2"/> : 'Get My Results'}
                         </Button>
                     ) : (
-                        <Button onClick={handleNext} size="lg">
+                        <Button onClick={handleNext} size="lg" disabled={isGeneralInfoStep && (!dob || !gender)}>
                             Next Section <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
                     )}
@@ -600,3 +655,5 @@ export default function AssessmentPage() {
     </div>
   );
 }
+
+    

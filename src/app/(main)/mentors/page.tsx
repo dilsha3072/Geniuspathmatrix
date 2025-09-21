@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { AppHeader } from '@/components/layout/app-header';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Send, User, Bot, CornerDownLeft } from 'lucide-react';
 import { getMentorResponse } from '@/lib/actions';
@@ -102,16 +102,17 @@ export default function MentorsPage() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <AppHeader title="Mentor Suite" />
+      <AppHeader title="MentorSuite AI" />
       <main className="flex-1 p-4 md:p-6 lg:p-8 flex flex-col">
         <div className="max-w-4xl mx-auto w-full flex-1 flex flex-col">
-          <div className="space-y-1 mb-8">
-            <h2 className="text-3xl font-bold font-headline tracking-tight">MentorSuite AI</h2>
-            <p className="text-muted-foreground">Your Socratic mirror and reflective engine for career discovery.</p>
-          </div>
-          
           <Card className="flex-1 flex flex-col">
-            <CardContent className="p-6 flex-1 flex flex-col">
+              <CardHeader>
+                  <CardTitle className="font-headline">Your Socratic Mirror</CardTitle>
+                  <CardDescription>
+                      Engage in a reflective conversation to explore your career and educational path.
+                  </CardDescription>
+              </CardHeader>
+            <CardContent className="p-6 pt-0 flex-1 flex flex-col">
                 <div className="flex-1 space-y-6 overflow-y-auto pr-4">
                     {messages.map((message, index) => (
                         <div key={index} className={cn("flex items-start gap-4", message.role === 'user' ? 'justify-end' : '')}>

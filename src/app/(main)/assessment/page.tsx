@@ -580,7 +580,7 @@ export default function AssessmentPage() {
     return (
         <Card>
             <CardHeader>
-                <CardTitle className="font-headline text-2xl">Welcome to the InsightX™ Assessment</CardTitle>
+                <CardTitle className="font-headline text-2xl">Welcome to the InsightX Assessment</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
                 <div>
@@ -673,5 +673,3 @@ export default function AssessmentPage() {
     </div>
   );
 }
-
-    

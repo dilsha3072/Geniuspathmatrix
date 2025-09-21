@@ -18,7 +18,7 @@ export async function generateSwotAnalysis(input: SwotAnalysisInput) {
   try {
     const analysis = await getSwotAnalysis(input);
     return { success: true, data: analysis };
-  } catch (error)_ {
+  } catch (error) {
     console.error('Error generating SWOT analysis:', error);
     return { success: false, error: 'Failed to generate SWOT analysis.' };
   }

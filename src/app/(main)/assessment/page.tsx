@@ -12,7 +12,6 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { LoadingSpinner } from '@/components/loading-spinner';
 import { getCareerSuggestions, sendParentQuiz } from '@/lib/actions';
-import type { CareerSuggestion } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { AlertCircle, ArrowLeft, ArrowRight, CalendarIcon, Clock, Mail } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -279,7 +278,7 @@ export default function AssessmentPage() {
 
   React.useEffect(() => {
     if (!authLoading && !user) {
-      router.push('/login');
+      router.push('/');
       toast({
         title: 'Authentication Required',
         description: 'You need to be logged in to take the assessment.',
@@ -331,19 +330,17 @@ export default function AssessmentPage() {
     setIsLoading(true);
 
     const formattedAnswers = {
-      personality: Object.entries(answers.personality).map(([k, v]) => `${k}:${v}`).join(' '),
-      interest: Object.entries(answers.interest).map(([k, v]) => `${k}:${v}`).join(' '),
-      cognitiveAbilities: Object.entries(answers.cognitiveAbilities).map(([k, v]) => `${k}:${v}`).join(' '),
-      selfReportedSkills: Object.entries(answers.selfReportedSkills).map(([k, v]) => `${k}:${v}`).join(' '),
-      cvq: Object.entries(answers.cvq).map(([k, v]) => `${k}:${v}`).join(' '),
+      personality: Object.entries(answers.personality).map(([k, v]) => `${assessmentQuestions.personality.find(q=>q.id===k)?.question}: ${ratingLabels.personality.find(l=>l.value===v)?.label}`).join('; '),
+      interest: Object.entries(answers.interest).map(([k, v]) => `${assessmentQuestions.interest.find(q=>q.id===k)?.question}: ${ratingLabels.interest.find(l=>l.value===v)?.label}`).join('; '),
+      cognitiveAbilities: Object.entries(answers.cognitiveAbilities).map(([k, v]) => `${assessmentQuestions.cognitive.find(q=>q.id===k)?.question}: ${v}`).join('; '),
+      selfReportedSkills: Object.entries(answers.selfReportedSkills).map(([k, v]) => `${assessmentQuestions.skillMapping.find(q=>q.id===k)?.question}: ${ratingLabels.skillMapping.find(l=>l.value===v)?.label}`).join('; '),
+      cvq: Object.entries(answers.cvq).map(([k, v]) => `${assessmentQuestions.cvq.find(q=>q.id===k)?.question}: ${ratingLabels.cvq.find(l=>l.value===v)?.label}`).join('; '),
       userId: user.uid,
     };
     
     const result = await getCareerSuggestions(formattedAnswers);
     
     if (result.success && result.data) {
-      // Data is now saved in Firestore via the server action.
-      // We can remove localStorage.
       router.push('/pathxplore');
     } else {
       toast({
@@ -355,13 +352,6 @@ export default function AssessmentPage() {
     }
   };
   
-  const resetAssessment = () => {
-    // This might be used to clear state and allow retaking, 
-    // but we'll leave data in Firestore for historical purposes.
-    setCurrentStep(0);
-    setAnswers({ personality: {}, interest: {}, cognitiveAbilities: {}, selfReportedSkills: {}, cvq: {} });
-  }
-
   if (authLoading || !user) {
     return (
       <div className="flex h-screen items-center justify-center">

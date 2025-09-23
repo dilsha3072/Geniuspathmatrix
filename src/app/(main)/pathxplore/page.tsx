@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { CareerSuggestion } from '@/lib/types';
-import { ArrowRight, FileText } from 'lucide-react';
+import { ArrowRight, FileText, Star } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/loading-spinner';
@@ -28,31 +28,57 @@ function CareerCard({
   career: CareerSuggestion;
   isTopPick?: boolean;
 }) {
-  // A simple function to format SWOT analysis text into HTML
   const formatSwot = (text: string) => {
     if (!text) return '';
-    return text
-      .replace(/(\*\*Strengths:\*\*|Strengths:)/g, '<strong>Strengths:</strong>')
-      .replace(/(\*\*Weaknesses:\*\*|Weaknesses:)/g, '<strong>Weaknesses:</strong>')
-      .replace(/(\*\*Opportunities:\*\*|Opportunities:)/g, '<strong>Opportunities:</strong>')
-      .replace(/(\*\*Threats:\*\*|Threats:)/g, '<strong>Threats:</strong>')
-      .replace(/\* /g, '<li>')
-      .replace(/\n/g, '</li>') + '</li>'; // Close the last item
+    const sections = {
+        'Strengths': '',
+        'Weaknesses': '',
+        'Opportunities': '',
+        'Threats': ''
+    };
+
+    // This regex is complex, but it handles various markdown-like list formats
+    const cleanedText = text.replace(/(\*\*|__)(.*?)\1/g, '$2'); // Remove bold markdown
+    const lines = cleanedText.split('\n').filter(line => line.trim() !== '');
+
+    let currentSection: keyof typeof sections | null = null;
+    
+    for (const line of lines) {
+        if (line.startsWith('Strengths:')) currentSection = 'Strengths';
+        else if (line.startsWith('Weaknesses:')) currentSection = 'Weaknesses';
+        else if (line.startsWith('Opportunities:')) currentSection = 'Opportunities';
+        else if (line.startsWith('Threats:')) currentSection = 'Threats';
+        else if (currentSection) {
+            const item = line.replace(/^[-*]\s*/, '').trim();
+            if (item) {
+                sections[currentSection] += `<li>${item}</li>`;
+            }
+        }
+    }
+    
+    let html = '';
+    for(const [key, value] of Object.entries(sections)) {
+        if (value) {
+            html += `<strong>${key}:</strong><ul class="list-disc pl-4 mt-1 mb-2">${value}</ul>`;
+        }
+    }
+    return html;
   };
 
   return (
     <Card
-      className='flex flex-col'
+      className='flex flex-col relative'
     >
       {isTopPick && (
         <Badge
           variant="default"
-          className="w-fit gap-1 self-start -mt-3 ml-4"
+          className="w-fit gap-1 self-start -mt-3 ml-4 absolute top-0 left-0 z-10"
         >
+          <Star className="h-3 w-3" />
           Top Pick for You
         </Badge>
       )}
-      <CardHeader>
+      <CardHeader className="pt-8">
         <CardTitle className="font-headline">{career.careerName}</CardTitle>
         <CardDescription>{career.careerDescription}</CardDescription>
       </CardHeader>
@@ -63,12 +89,16 @@ function CareerCard({
         </div>
         <div>
           <h4 className="font-semibold mb-2 text-sm">SWOT Analysis:</h4>
-          <ul className="text-sm text-muted-foreground list-disc pl-5 space-y-1" dangerouslySetInnerHTML={{ __html: formatSwot(career.swotAnalysis) }}></ul>
+          <div className="text-sm text-muted-foreground space-y-1" dangerouslySetInnerHTML={{ __html: formatSwot(career.swotAnalysis) }}></div>
         </div>
       </CardContent>
-      <CardFooter className="flex justify-between">
-         <Button variant="outline">View Details</Button>
-         <Button>Select Path</Button>
+      <CardFooter className="flex justify-end">
+         <Button asChild>
+            <Link href="/goals">
+                Select Path & Plan Goals
+                <ArrowRight className="ml-2"/>
+            </Link>
+        </Button>
       </CardFooter>
     </Card>
   );
@@ -85,9 +115,11 @@ export default function PathXplorePage() {
       if (authLoading) return;
       if (!user) {
         setIsLoading(false);
+        // Optionally, redirect or show login prompt
         return;
       }
 
+      setIsLoading(true);
       try {
         const res = await getUserData(user.uid);
         if (res.success && res.data?.careerSuggestions) {
@@ -107,12 +139,11 @@ export default function PathXplorePage() {
   }, [user, authLoading, toast]);
 
   const handleGenerateReport = () => {
-    // In a real app, this would trigger a more complex report generation flow.
-    // For now, we just acknowledge it and point to the reports page.
     toast({
       title: 'Report Generated!',
-      description: 'Your PathXplore report is being prepared. You will be able to download it from the Reports section shortly.',
+      description: 'Your PathXplore report can be downloaded from the Reports page.',
     });
+    // In a real app, this might trigger a server-side PDF generation
   }
 
   if (isLoading || authLoading) {
@@ -122,7 +153,7 @@ export default function PathXplorePage() {
             <main className="flex-1 flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
                     <LoadingSpinner className="h-10 w-10" />
-                    <p className="text-muted-foreground">Loading your results...</p>
+                    <p className="text-muted-foreground">Loading your personalized career paths...</p>
                 </div>
             </main>
         </div>
@@ -154,7 +185,7 @@ export default function PathXplorePage() {
                     Discover Your Career Matches
                     </h2>
                     <p className="text-muted-foreground max-w-2xl mx-auto">
-                    Once you complete the InsightX assessment, our AI engine will find strong career matches that truly fit for you.
+                    Complete the InsightX assessment, and our AI engine will find strong career matches that truly fit you.
                     </p>
                 </>
             )}
@@ -163,7 +194,7 @@ export default function PathXplorePage() {
           {hasTakenAssessment ? (
             <div className="space-y-12">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {results.map((career, index) => (
+                    {results.slice(0, 5).map((career, index) => ( // Show top 5
                     <CareerCard
                         key={career.careerName}
                         career={career}
@@ -173,10 +204,10 @@ export default function PathXplorePage() {
                 </div>
 
                 <Card className="bg-muted/50">
-                    <CardHeader className="flex-row items-center justify-between">
+                    <CardHeader className="flex-col md:flex-row items-start md:items-center justify-between gap-4">
                         <div className="space-y-1">
                             <CardTitle className="font-headline">PathXplore Report & Next Steps</CardTitle>
-                            <CardDescription>Generate a detailed report of your results and move on to the next step: planning.</CardDescription>
+                            <CardDescription>Generate a detailed report and start planning your future.</CardDescription>
                         </div>
                          <div className="flex gap-4">
                             <Button variant="secondary" onClick={handleGenerateReport}>
@@ -194,10 +225,10 @@ export default function PathXplorePage() {
 
             </div>
           ) : (
-             <Card className="text-center p-12">
+             <Card className="text-center p-12 border-dashed">
                 <CardTitle className="font-headline mb-2">No Assessment Data Found</CardTitle>
-                <CardDescription className="mb-6">Please complete the InsightX Assessment to discover your personalized career paths.</CardDescription>
-                <Button asChild>
+                <CardDescription className="mb-6 max-w-md mx-auto">Please complete the InsightX Assessment to discover your personalized career paths and unlock your potential.</CardDescription>
+                <Button asChild size="lg">
                     <Link href="/assessment">Take Assessment Now</Link>
                 </Button>
              </Card>

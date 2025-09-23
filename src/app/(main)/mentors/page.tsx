@@ -19,12 +19,11 @@ import { useToast } from '@/hooks/use-toast';
 export default function MentorsPage() {
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
-  const [messages, setMessages] = React.useState<Message[]>([
-    {
-      role: 'model',
-      content: "Hello! I am your MentorSuite AI, a Socratic mirror designed to help you reflect on your career path. What's on your mind today?",
-    }
-  ]);
+  const [messages, setMessages] = React.useState<Message[]>([]);
+  const [initialMessage, setInitialMessage] = React.useState<Message>({
+    role: 'model',
+    content: "Hello! I am your MentorSuite AI, a Socratic mirror designed to help you reflect on your career path. What's on your mind today?",
+  });
   const [input, setInput] = React.useState('');
   const [isLoading, setIsLoading] = React.useState(false);
   const [studentProfile, setStudentProfile] = React.useState('');
@@ -68,7 +67,7 @@ export default function MentorsPage() {
             setStudentProfile(profile);
 
             if (res.data.mentorChat) {
-                setMessages(prev => [prev[0], ...res.data.mentorChat]);
+                setMessages(res.data.mentorChat);
             }
         }
       } catch (e) {
@@ -91,19 +90,19 @@ export default function MentorsPage() {
 
   React.useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, isLoading]);
 
   const handleSendMessage = async (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!input.trim() || isLoading || !user) return;
 
     const userMessage: Message = { role: 'user', content: input };
-    const newMessages = [...messages, userMessage];
-    setMessages(newMessages);
+    const currentMessages = [...messages, userMessage];
+    setMessages(currentMessages);
     setInput('');
     setIsLoading(true);
 
-    const result = await getMentorResponse({ messages: newMessages, studentProfile, userId: user.uid });
+    const result = await getMentorResponse({ messages: [initialMessage, ...currentMessages], studentProfile, userId: user.uid });
     
     if (result.success && result.data) {
         const modelMessage: Message = { role: 'model', content: result.data };
@@ -111,6 +110,11 @@ export default function MentorsPage() {
     } else {
         const errorMessage: Message = { role: 'model', content: "I'm sorry, I encountered an error and couldn't process your message. Please try again." };
         setMessages(prev => [...prev, errorMessage]);
+         toast({
+            variant: 'destructive',
+            title: 'Mentor AI Error',
+            description: result.error || 'Failed to get a response.',
+        });
     }
 
     setIsLoading(false);
@@ -133,6 +137,8 @@ export default function MentorsPage() {
         </div>
       )
   }
+  
+  const displayMessages = [initialMessage, ...messages];
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -147,26 +153,26 @@ export default function MentorsPage() {
                   </CardDescription>
               </CardHeader>
             <CardContent className="p-6 pt-0 flex-1 flex flex-col">
-                <div className="flex-1 space-y-6 overflow-y-auto pr-4">
-                    {messages.map((message, index) => (
+                <div className="flex-1 space-y-6 overflow-y-auto pr-4 -mr-4">
+                    {displayMessages.map((message, index) => (
                         <div key={index} className={cn("flex items-start gap-4", message.role === 'user' ? 'justify-end' : '')}>
                             {message.role === 'model' && <Bot className="h-8 w-8 text-primary flex-shrink-0" />}
-                            <div className={cn("max-w-lg rounded-xl p-4 text-sm", message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted')}>
+                            <div className={cn("max-w-lg rounded-xl p-4 text-sm whitespace-pre-wrap", message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted')}>
                                 {message.content}
                             </div>
                             {message.role === 'user' && <User className="h-8 w-8 text-muted-foreground flex-shrink-0" />}
                         </div>
                     ))}
                     <div ref={messagesEndRef} />
-                </div>
-                 {isLoading && (
-                    <div className="flex items-center gap-4 p-4">
-                        <Bot className="h-8 w-8 text-primary flex-shrink-0 animate-pulse" />
-                        <div className="bg-muted p-4 rounded-xl">
-                            <LoadingSpinner className="h-5 w-5" />
+                     {isLoading && (
+                        <div className="flex items-center gap-4 p-4">
+                            <Bot className="h-8 w-8 text-primary flex-shrink-0 animate-pulse" />
+                            <div className="bg-muted p-4 rounded-xl">
+                                <LoadingSpinner className="h-5 w-5" />
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )}
+                </div>
             </CardContent>
             <div className="p-4 border-t">
                 <form onSubmit={handleSendMessage} className="relative">
@@ -174,7 +180,7 @@ export default function MentorsPage() {
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        placeholder="Ask me anything about your career path..."
+                        placeholder={user ? "Ask me anything about your career path..." : "Please log in to chat with the mentor."}
                         className="pr-20 min-h-[52px] resize-none"
                         disabled={isLoading || !user}
                     />

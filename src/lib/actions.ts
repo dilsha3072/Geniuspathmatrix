@@ -6,7 +6,7 @@ import { getSwotAnalysis, SwotAnalysisInput } from '@/ai/flows/swot-analysis-for
 import { generateGoalsForCareer, GenerateGoalsInput } from '@/ai/flows/generate-goals-flow';
 import { getSocraticResponse, MentorInput, Message } from '@/ai/flows/mentor-flow';
 import { auth, db } from '@/lib/firebase-admin'; // Using admin SDK on the server
-import { doc, setDoc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 
 
 // This helper function assumes you have a way to get the current user's ID.
@@ -24,9 +24,9 @@ async function getCurrentUserId(request: { userId?: string }): Promise<string> {
 }
 
 
-export async function getCareerSuggestions(input: SuggestCareersInput & { userId?: string }) {
+export async function getCareerSuggestions(input: SuggestCareersInput & { userId: string }) {
   try {
-    const userId = await getCurrentUserId(input);
+    const userId = input.userId;
     const suggestions = await suggestCareers(input);
     
     // Save assessment answers and career suggestions to Firestore
@@ -57,9 +57,9 @@ export async function generateSwotAnalysis(input: SwotAnalysisInput) {
   }
 }
 
-export async function getGeneratedGoals(input: GenerateGoalsInput & { userId?: string }) {
+export async function getGeneratedGoals(input: GenerateGoalsInput & { userId: string }) {
     try {
-        const userId = await getCurrentUserId(input);
+        const userId = input.userId;
         const goals = await generateGoalsForCareer(input);
         
         const userDocRef = doc(db, "users", userId);
@@ -84,25 +84,26 @@ export async function sendParentQuiz(parentContact: { email?: string, phone?: st
     return { success: false, error: 'No contact information provided.' };
   }
   // In a real app, you would generate a unique, secure link to the /parent-quiz page.
-  const quizLink = '/parent-quiz'; 
+  const quizLink = '/parent-quiz?uid=<some-unique-token>'; 
   console.log(`(Pretend) Sending link ${quizLink} to parent.`);
   
   // Simulate success
   return { success: true, message: 'Parent quiz sent successfully!' };
 }
 
-export async function getMentorResponse(input: MentorInput & { userId?: string }) {
+export async function getMentorResponse(input: MentorInput & { userId: string }) {
   try {
-    const userId = await getCurrentUserId(input);
+    const userId = input.userId;
     const response = await getSocraticResponse(input);
     
     // Save both user message and model response to Firestore
     const userDocRef = doc(db, "users", userId);
     const userMessage = input.messages[input.messages.length - 1];
 
+    // Use arrayUnion to add the new messages to the chat history
     await updateDoc(userDocRef, {
         mentorChat: arrayUnion(userMessage, { role: 'model', content: response })
-    });
+    }, { merge: true }); // Use merge to avoid overwriting the whole document
     
     return { success: true, data: response };
   } catch (error) {
@@ -123,7 +124,9 @@ export async function getUserData(userId: string) {
         if (docSnap.exists()) {
             return { success: true, data: docSnap.data() };
         } else {
-            return { success: true, data: null }; // User exists but has no data yet
+            // This case can happen if the user document wasn't created on signup
+            // For robustness, we could create it here, but for now, we return null.
+            return { success: true, data: null };
         }
     } catch (error) {
         console.error('Error fetching user data:', error);

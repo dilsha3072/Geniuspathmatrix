@@ -43,8 +43,7 @@ export function AppHeader({ title, showAuthButtons = false }: AppHeaderProps) {
       <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b border-border bg-background px-4 sm:px-6">
         <SidebarTrigger className="md:hidden" />
         <h1 className="text-xl md:text-2xl font-bold font-headline text-foreground">{title}</h1>
-        {showAuthButtons && (
-          <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-2">
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -77,13 +76,14 @@ export function AppHeader({ title, showAuthButtons = false }: AppHeaderProps) {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <>
-                <Button variant="ghost" onClick={() => setAuthMode('login')}>Log In</Button>
-                <Button onClick={() => setAuthMode('signup')}>Sign Up</Button>
-              </>
+               showAuthButtons && (
+                <>
+                    <Button variant="ghost" onClick={() => setAuthMode('login')}>Log In</Button>
+                    <Button onClick={() => setAuthMode('signup')}>Sign Up</Button>
+                </>
+               )
             )}
-          </div>
-        )}
+        </div>
       </header>
       <AuthDialog mode={authMode} onModeChange={setAuthMode} />
     </>

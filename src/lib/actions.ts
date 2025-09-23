@@ -5,7 +5,7 @@ import { getSwotAnalysis, SwotAnalysisInput } from '@/ai/flows/swot-analysis-for
 import { generateGoalsForCareer, GenerateGoalsInput } from '@/ai/flows/generate-goals-flow';
 import { getSocraticResponse, MentorInput, Message } from '@/ai/flows/mentor-flow';
 import { db } from '@/lib/firebase-admin'; // Using admin SDK on the server
-import { doc, getDoc, updateDoc, arrayUnion, setDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, arrayUnion, setDoc, Timestamp } from 'firebase/firestore';
 
 
 export async function getCareerSuggestions(input: SuggestCareersInput & { userId: string }) {
@@ -15,12 +15,11 @@ export async function getCareerSuggestions(input: SuggestCareersInput & { userId
 
     const suggestions = await suggestCareers(input);
     
-    // Save assessment answers and career suggestions to Firestore
     const userDocRef = doc(db, "users", userId);
     await updateDoc(userDocRef, {
         assessment: {
             ...input,
-            updatedAt: new Date(),
+            updatedAt: Timestamp.now(),
         },
         careerSuggestions: suggestions,
     });
@@ -85,12 +84,9 @@ export async function getMentorResponse(input: MentorInput & { userId: string })
     
     const response = await getSocraticResponse(input);
     
-    // Save both user message and model response to Firestore
     const userDocRef = doc(db, "users", userId);
     const userMessage = input.messages[input.messages.length - 1];
 
-    // Use arrayUnion to add the new messages to the chat history
-    // We ensure the mentorChat field exists before trying to union.
     const userDoc = await getDoc(userDocRef);
     if (!userDoc.exists() || !userDoc.data()?.mentorChat) {
          await setDoc(userDocRef, { mentorChat: [] }, { merge: true });
@@ -119,7 +115,6 @@ export async function getUserData(userId: string) {
         if (docSnap.exists()) {
             return { success: true, data: docSnap.data() };
         } else {
-            // This case can happen if the user document wasn't created on signup for some reason.
             return { success: true, data: null };
         }
     } catch (error) {

@@ -40,6 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Save user to Firestore
     if (user) {
       await setDoc(doc(db, "users", user.uid), {
+        uid: user.uid,
         email: user.email,
         createdAt: serverTimestamp(),
       });
@@ -60,17 +61,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     logout,
   };
 
-  if (loading) {
-    return (
-        <div className="flex h-screen items-center justify-center">
-            <LoadingSpinner className="h-12 w-12" />
-        </div>
-    );
-  }
-
   return (
     <AuthContext.Provider value={value}>
-      {children}
+      {loading ? (
+         <div className="flex h-screen items-center justify-center">
+            <LoadingSpinner className="h-12 w-12" />
+        </div>
+      ) : children}
     </AuthContext.Provider>
   );
 }

@@ -3,9 +3,9 @@
 import { suggestCareers, SuggestCareersInput } from '@/ai/flows/ai-career-suggestions';
 import { getSwotAnalysis, SwotAnalysisInput } from '@/ai/flows/swot-analysis-for-career';
 import { generateGoalsForCareer, GenerateGoalsInput } from '@/ai/flows/generate-goals-flow';
-import { getSocraticResponse, MentorInput, Message } from '@/ai/flows/mentor-flow';
+import { getSocraticResponse, MentorInput } from '@/ai/flows/mentor-flow';
 import { db } from '@/lib/firebase-admin'; // Using admin SDK on the server
-import { doc, getDoc, updateDoc, arrayUnion, setDoc, Timestamp } from 'firebase/firestore';
+import { Timestamp } from 'firebase-admin/firestore';
 
 
 export async function getCareerSuggestions(input: SuggestCareersInput & { userId: string }) {
@@ -15,8 +15,8 @@ export async function getCareerSuggestions(input: SuggestCareersInput & { userId
 
     const suggestions = await suggestCareers(input);
     
-    const userDocRef = doc(db, "users", userId);
-    await updateDoc(userDocRef, {
+    const userDocRef = db.collection("users").doc(userId);
+    await userDocRef.update({
         assessment: {
             ...input,
             updatedAt: Timestamp.now(),
@@ -49,8 +49,8 @@ export async function getGeneratedGoals(input: GenerateGoalsInput & { userId: st
 
         const goals = await generateGoalsForCareer(input);
         
-        const userDocRef = doc(db, "users", userId);
-        await updateDoc(userDocRef, {
+        const userDocRef = db.collection("users").doc(userId);
+        await userDocRef.update({
             goalPlan: goals,
         });
 
@@ -84,16 +84,16 @@ export async function getMentorResponse(input: MentorInput & { userId: string })
     
     const response = await getSocraticResponse(input);
     
-    const userDocRef = doc(db, "users", userId);
+    const userDocRef = db.collection("users").doc(userId);
     const userMessage = input.messages[input.messages.length - 1];
 
-    const userDoc = await getDoc(userDocRef);
-    if (!userDoc.exists() || !userDoc.data()?.mentorChat) {
-         await setDoc(userDocRef, { mentorChat: [] }, { merge: true });
+    const userDoc = await userDocRef.get();
+    if (!userDoc.exists || !userDoc.data()?.mentorChat) {
+         await userDocRef.set({ mentorChat: [] }, { merge: true });
     }
     
-    await updateDoc(userDocRef, {
-        mentorChat: arrayUnion(userMessage, { role: 'model', content: response })
+    await userDocRef.update({
+        mentorChat: FieldValue.arrayUnion(userMessage, { role: 'model', content: response })
     });
     
     return { success: true, data: response };
@@ -109,12 +109,14 @@ export async function getUserData(userId: string) {
         if (!userId) {
             return { success: false, error: "User not authenticated." };
         }
-        const userDocRef = doc(db, "users", userId);
-        const docSnap = await getDoc(userDocRef);
+        const userDocRef = db.collection("users").doc(userId);
+        const docSnap = await userDocRef.get();
 
-        if (docSnap.exists()) {
+        if (docSnap.exists) {
             return { success: true, data: docSnap.data() };
         } else {
+            // This might happen if there's a delay in Firestore replication after signup.
+            // We'll return null, and the frontend can decide if it should retry.
             return { success: true, data: null };
         }
     } catch (error) {

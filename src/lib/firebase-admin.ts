@@ -3,6 +3,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { applicationDefault } from 'firebase-admin/app';
 
+// This function ensures the Firebase Admin app is initialized only once.
 function getAdminApp() {
     if (admin.apps.length > 0) {
         return admin.app();
@@ -17,7 +18,7 @@ function getAdminApp() {
     } catch (e) {
         console.error('Firebase Admin Initialization Error:', e);
         // This block will re-throw the error, ensuring that we don't proceed
-        // with an uninitialized app, which was the cause of the crashes.
+        // with an uninitialized app.
         throw new Error('Failed to initialize Firebase Admin SDK. Ensure GOOGLE_APPLICATION_CREDENTIALS are set.');
     }
 }

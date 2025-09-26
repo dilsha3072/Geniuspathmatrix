@@ -189,27 +189,19 @@ const assessmentQuestions = {
   ]
 };
 
-function Timer({ minutes, onTimeUp }: { minutes: number; onTimeUp: () => void }) {
-  const [seconds, setSeconds] = React.useState(minutes * 60);
-
-  React.useEffect(() => {
-    if (seconds <= 0) {
-      onTimeUp();
-      return;
-    }
-    const interval = setInterval(() => {
-      setSeconds(prev => prev - 1);
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [seconds, onTimeUp]);
-
-  const displayMinutes = Math.floor(seconds / 60);
-  const displaySeconds = seconds % 60;
+function Timer({ secondsLeft, totalSeconds }: { secondsLeft: number; totalSeconds: number; }) {
+  const displayMinutes = Math.floor(secondsLeft / 60);
+  const displaySeconds = secondsLeft % 60;
+  
+  const totalMinutes = Math.floor(totalSeconds / 60);
 
   return (
-    <div className="flex items-center gap-2 font-mono text-lg font-semibold">
-      <Clock className="h-5 w-5" />
-      <span>{String(displayMinutes).padStart(2, '0')}:{String(displaySeconds).padStart(2, '0')}</span>
+    <div className="flex flex-col items-end">
+      <div className="flex items-center gap-2 font-mono text-lg font-semibold">
+        <Clock className="h-5 w-5" />
+        <span>{String(displayMinutes).padStart(2, '0')}:{String(displaySeconds).padStart(2, '0')}</span>
+      </div>
+      <p className="text-xs text-muted-foreground">Total Time: {totalMinutes} minutes</p>
     </div>
   );
 }
@@ -273,6 +265,8 @@ export default function AssessmentPage() {
   const [schoolOrCollege, setSchoolOrCollege] = React.useState('');
   const [parentEmail, setParentEmail] = React.useState('');
   const [parentPhone, setParentPhone] = React.useState('');
+  const [timeLeft, setTimeLeft] = React.useState(3600); // 60 minutes in seconds
+  const [isTestActive, setIsTestActive] = React.useState(false);
   const { toast } = useToast();
 
   React.useEffect(() => {
@@ -285,6 +279,26 @@ export default function AssessmentPage() {
       });
     }
   }, [user, authLoading, router, toast]);
+  
+  React.useEffect(() => {
+    if (!isTestActive) return;
+    
+    if (timeLeft <= 0) {
+      handleSubmit();
+      return;
+    }
+    
+    const interval = setInterval(() => {
+      setTimeLeft(prev => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [timeLeft, isTestActive]);
+
+  const handleStartAssessment = () => {
+    setIsTestActive(true);
+    setCurrentStep(1);
+  };
 
   const handleNext = () => setCurrentStep(prev => Math.min(prev + 1, totalSteps));
   const handleBack = () => setCurrentStep(prev => Math.max(prev - 1, 0));
@@ -326,6 +340,7 @@ export default function AssessmentPage() {
       });
       return;
     }
+    setIsTestActive(false);
     setIsLoading(true);
 
     const formattedAnswers = {
@@ -571,12 +586,11 @@ export default function AssessmentPage() {
       }
       return (
         <Card>
-          <CardHeader className="flex-row justify-between items-center">
+          <CardHeader>
             <div>
               <CardTitle className="font-headline">{section.title}</CardTitle>
               <CardDescription>{section.instructions}</CardDescription>
             </div>
-            <Timer minutes={section.time} onTimeUp={handleNext} />
           </CardHeader>
           <CardContent className="p-6 md:p-8 space-y-6">
             {questionsContent}
@@ -631,7 +645,7 @@ export default function AssessmentPage() {
                 </Alert>
             </CardContent>
              <CardFooter>
-                <Button onClick={handleNext} className="w-full" size="lg">Start Assessment</Button>
+                <Button onClick={handleStartAssessment} className="w-full" size="lg">Start Assessment</Button>
             </CardFooter>
         </Card>
     );
@@ -652,18 +666,24 @@ export default function AssessmentPage() {
            </div>
         ) : (
           <div className="max-w-4xl mx-auto space-y-8">
-            {currentStep > 1 && currentStep <= assessmentSections.length + 1 && (
-                <div className="space-y-4">
-                  <Progress value={((currentStep - 1) / assessmentSections.length) * 100} className="w-full" />
-                  <p className="text-center text-sm text-muted-foreground">Section {currentStep - 1} of {assessmentSections.length}</p>
-                </div>
+            {isTestActive && (
+              <Card className="sticky top-16 z-20">
+                <CardContent className="p-4 flex justify-between items-center">
+                    <div className="flex-1 space-y-2">
+                      <Progress value={((currentStep - 1) / assessmentSections.length) * 100} className="w-full" />
+                      <p className="text-center text-sm text-muted-foreground">Section {currentStep - 1} of {assessmentSections.length}</p>
+                    </div>
+                    <div className="w-px bg-border h-10 mx-6"></div>
+                    <Timer secondsLeft={timeLeft} totalSeconds={3600} />
+                </CardContent>
+              </Card>
             )}
             
             {renderStep()}
             
-            {currentStep > 0 && currentStep <= assessmentSections.length + 1 && (
+            {isTestActive && (
                 <div className="flex justify-between items-center mt-6">
-                    <Button variant="outline" onClick={handleBack} disabled={currentStep === 0}>
+                    <Button variant="outline" onClick={handleBack} disabled={currentStep === 0 || currentStep === 1}>
                         <ArrowLeft className="mr-2 h-4 w-4" /> Back
                     </Button>
                     {isLastAssessmentStep ? (

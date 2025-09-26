@@ -189,19 +189,18 @@ const assessmentQuestions = {
   ]
 };
 
-function Timer({ secondsLeft, totalSeconds }: { secondsLeft: number; totalSeconds: number; }) {
+function Timer({ secondsLeft }: { secondsLeft: number; }) {
   const displayMinutes = Math.floor(secondsLeft / 60);
   const displaySeconds = secondsLeft % 60;
   
-  const totalMinutes = Math.floor(totalSeconds / 60);
-
   return (
     <div className="flex flex-col items-end">
       <div className="flex items-center gap-2 font-mono text-lg font-semibold">
         <Clock className="h-5 w-5" />
-        <span>{String(displayMinutes).padStart(2, '0')}:{String(displaySeconds).padStart(2, '0')}</span>
+        <span>{String(displayMinutes).padStart(2, '0')}:{String(displaySeconds).padStart(2, '0')
+        }</span>
       </div>
-      <p className="text-xs text-muted-foreground">Total Time: {totalMinutes} minutes</p>
+      <p className="text-xs text-muted-foreground">Total Time: 60 minutes</p>
     </div>
   );
 }
@@ -673,7 +672,7 @@ export default function AssessmentPage() {
                       <p className="text-center text-sm text-muted-foreground">Section {currentStep - 1} of {assessmentSections.length}</p>
                     </div>
                     <div className="w-px bg-border h-10 mx-6"></div>
-                    <Timer secondsLeft={timeLeft} totalSeconds={3600} />
+                    <Timer secondsLeft={timeLeft} />
                 </CardContent>
               </Card>
             )}
@@ -703,3 +702,5 @@ export default function AssessmentPage() {
     </div>
   );
 }
+
+    

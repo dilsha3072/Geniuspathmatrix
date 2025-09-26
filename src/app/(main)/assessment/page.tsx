@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -10,9 +11,9 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { LoadingSpinner } from '@/components/loading-spinner';
-import { getCareerSuggestions, sendParentQuiz } from '@/lib/actions';
+import { getCareerSuggestions, sendParentQuiz, getUserData } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
-import { AlertCircle, ArrowLeft, ArrowRight, CalendarIcon, Clock, Mail } from 'lucide-react';
+import { AlertCircle, ArrowLeft, ArrowRight, CalendarIcon, Clock, Mail, FileCheck } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -26,29 +27,29 @@ const assessmentSections = [
     id: 'personality',
     title: 'Personality Assessment',
     questions: 30,
-    time: 15,
+    time: 15, // This is now just an estimate
     instructions: 'Rate how much each statement describes you on a scale of 1 (Disagree) to 4 (Agree).',
   },
   {
     id: 'interest',
     title: 'Interest Inventory',
     questions: 20,
-    time: 10,
+    time: 10, // This is now just an estimate
     instructions: 'Indicate how much you would enjoy performing each activity on a scale of 1 (Dislike) to 4 (Like).',
   },
   {
     id: 'cognitive',
     title: 'Cognitive Capability + Skill Mapping',
     questions: 20, // 10 cognitive + 10 skill mapping
-    time: 20,
+    time: 20, // This is now just an estimate
     instructions: 'This section has two parts. First, answer cognitive ability questions. Then, self-assess your skills.',
   },
   {
     id: 'cvq',
     title: 'Contextual Viability Quotient (CVQ™)',
-    questions: 15,
-    time: 12,
-    instructions: 'Rate how much you agree with each statement on a scale of 1 (Disagree) to 4 (Agree) for your top career choice.',
+    questions: 10,
+    time: 12, // This is now just an estimate
+    instructions: 'Rate how much you agree with each statement on a scale of 1 (Disagree) to 4 (Agree).',
   },
 ];
 
@@ -163,19 +164,14 @@ const assessmentQuestions = {
   cvq: [
     { id: 'cvq1', section: 'Cultural & Societal Compatibility', question: 'I am free to pursue any career, regardless of family traditions or expectations.' },
     { id: 'cvq2', section: 'Cultural & Societal Compatibility', question: 'My family does not interfere in my career decision-making.' },
-    { id: 'cvq4', section: 'Cultural & Societal Compatibility', question: 'I feel confident resisting social pressure when choosing my career.' },
     { id: 'cvq6', section: 'Language Readiness (Current + Future)', question: 'I can currently read, write, and speak in English or the required career language.' },
     { id: 'cvq7', section: 'Language Readiness (Current + Future)', question: 'I understand lectures, videos, or tutorials in English without needing translations.' },
-    { id: 'cvq10', section: 'Language Readiness (Current + Future)', question: 'I am confident in my ability to clear language-based entrance tests or interviews.' },
     { id: 'cvq11', section: 'Digital Access & Tech Confidence', question: 'I have regular access to a smartphone with internet.' },
     { id: 'cvq12', section: 'Digital Access & Tech Confidence', question: 'I have access to a laptop or desktop at least 3 days per week.' },
     { id: 'cvq13', section: 'Digital Access & Tech Confidence', question: 'I feel confident using online learning platforms and productivity tools.' },
-    { id: 'cvq16', section: 'Financial & Geographic Readiness', question: 'I can afford entrance or coaching exam fees over the next year.' },
     { id: 'cvq18', section: 'Financial & Geographic Readiness', question: 'I am willing to apply for scholarships or part-time jobs to support my career goals.' },
     { id: 'cvq19', section: 'Financial & Geographic Readiness', question: 'I am willing to relocate to another city/state/country for education or work.' },
     { id: 'cvq23', section: 'Parental & Familial Support', question: 'I feel comfortable discussing my career aspirations openly with my parents.' },
-    { id: 'cvq24', section: 'Parental & Familial Support', question: 'My parents are actively involved in my educational and career planning.' },
-    { id: 'cvq25', section: 'Parental & Familial Support', question: 'My family would support my choice to pursue a non-traditional career path (e.g., in arts, entrepreneurship).' },
   ]
 };
 
@@ -245,7 +241,7 @@ export default function AssessmentPage() {
     selfReportedSkills: {},
     cvq: {},
   });
-  const [isLoading, setIsLoading] = React.useState(false);
+  const [submissionStatus, setSubmissionStatus] = React.useState<'idle' | 'submitting' | 'polling' | 'failed' | 'success'>('idle');
   const [isSendingQuiz, setIsSendingQuiz] = React.useState(false);
   const [dob, setDob] = React.useState<Date | undefined>();
   const [gender, setGender] = React.useState('');
@@ -271,6 +267,22 @@ export default function AssessmentPage() {
       });
     }
   }, [user, authLoading, router, toast]);
+
+  const waitForReport = React.useCallback(async (userId: string) => {
+    let attempts = 0;
+    const maxAttempts = 15; // Poll for 30 seconds
+    while (attempts < maxAttempts) {
+        const res = await getUserData(userId);
+        // We check for careerSuggestions, as that's what the report generation depends on
+        if (res.success && res.data?.careerSuggestions) {
+            console.log("Report ready!", res.data);
+            return true;
+        }
+        attempts++;
+        await new Promise(res => setTimeout(res, 2000));
+    }
+    return false;
+  }, []);
   
   const handleSubmit = React.useCallback(async () => {
     if (submittedRef.current) return;
@@ -287,7 +299,7 @@ export default function AssessmentPage() {
     }
 
     setIsTestActive(false);
-    setIsLoading(true);
+    setSubmissionStatus('submitting');
 
     const formattedAnswers = {
       personality: Object.entries(answers.personality).map(([k, v]) => `${assessmentQuestions.personality.find(q=>q.id===k)?.question}: ${ratingLabels.personality.find(l=>l.value===v)?.label}`).join('; '),
@@ -300,18 +312,30 @@ export default function AssessmentPage() {
     
     const result = await getCareerSuggestions(formattedAnswers);
     
-    if (result.success && result.data) {
-      router.push('/pathxplore');
+    if (result.success) {
+      setSubmissionStatus('polling');
+      const reportReady = await waitForReport(user.uid);
+      if (reportReady) {
+        setSubmissionStatus('success');
+        router.push('/pathxplore');
+      } else {
+        setSubmissionStatus('failed');
+        toast({
+            variant: 'destructive',
+            title: 'Report Generation Timed Out',
+            description: "Your results are saved, but the report took too long. Please check the PathXplore page in a few minutes.",
+        });
+      }
     } else {
+      setSubmissionStatus('failed');
       toast({
         variant: 'destructive',
         title: 'Something went wrong',
-        description: result.error || 'Could not generate career suggestions. Please try again.',
+        description: result.error || 'Could not save your assessment. Please try again.',
       });
-      setIsLoading(false);
       submittedRef.current = false;
     }
-  }, [user, answers, router, toast]);
+  }, [user, answers, router, toast, waitForReport]);
   
   React.useEffect(() => {
     if (!isTestActive) return;
@@ -332,8 +356,7 @@ export default function AssessmentPage() {
     }, 1000);
 
     return () => clearInterval(interval);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timeLeft, isTestActive]);
+  }, [timeLeft, isTestActive, handleSubmit, toast]);
 
   React.useEffect(() => {
     if (isTestActive) {
@@ -611,7 +634,7 @@ export default function AssessmentPage() {
     }
 
     const totalQuestions = assessmentSections.reduce((total, section) => total + section.questions, 0);
-    const totalTime = assessmentSections.reduce((total, section) => total + section.time, 0);
+    const totalTimeInMinutes = assessmentSections.reduce((total, section) => total + section.time, 0);
 
     return (
         <Card>
@@ -625,8 +648,8 @@ export default function AssessmentPage() {
                         <li>For students of 13-19 age group: Discover Your Unique Potential</li>
                         <li>This assessment is designed to help you understand your unique personality, interests, and cognitive strengths. There are no right or wrong answers. Answer honestly based on how you truly feel or typically behave.</li>
                         <li>The assessment consists of {totalQuestions} questions divided into {assessmentSections.length} sections.</li>
-                        <li>A continuous timer of {totalTime} minutes is set for the entire assessment.</li>
-                        <li>Once you complete a section and move to the next, you will not be able to go back to previous sections.</li>
+                        <li>A continuous timer of 60 minutes is set for the entire assessment.</li>
+                        <li>Once you start, the timer will not stop. If you leave the page, the timer will continue. The assessment will auto-submit when the time is up.</li>
                         <li>Read each question carefully.</li>
                         <li>Choose the option that best describes you or your answer.</li>
                     </ul>
@@ -664,15 +687,25 @@ export default function AssessmentPage() {
   const isLastAssessmentStep = currentStep === assessmentSections.length + 1;
   const isGeneralInfoStep = currentStep === 1;
 
+  const isLoading = submissionStatus === 'submitting' || submissionStatus === 'polling';
+  const loadingText = submissionStatus === 'submitting' 
+    ? "Submitting your answers..." 
+    : "Analyzing your profile and generating your report...";
+
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <AppHeader title="InsightX Assessment" />
       <main className="flex-1 p-4 md:p-6 lg:p-8">
-        {isLoading ? (
+        {submissionStatus !== 'idle' && submissionStatus !== 'failed' ? (
            <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
               <LoadingSpinner className="w-12 h-12 text-primary"/>
-              <h2 className="text-2xl font-bold font-headline">Analyzing Your Profile...</h2>
-              <p className="text-muted-foreground max-w-md">Our AI is crunching the numbers to find your perfect career matches. This might take a moment.</p>
+              <h2 className="text-2xl font-bold font-headline">{loadingText}</h2>
+              <p className="text-muted-foreground max-w-md">
+                {submissionStatus === 'polling' 
+                    ? "Our AI is crunching the numbers to find your perfect career matches. This might take a moment."
+                    : "Please wait while we securely save your assessment responses."
+                }
+              </p>
            </div>
         ) : (
           <div className="max-w-4xl mx-auto space-y-8">
@@ -698,7 +731,8 @@ export default function AssessmentPage() {
                     </Button>
                     {isLastAssessmentStep ? (
                         <Button onClick={handleSubmit} disabled={isLoading} size="lg">
-                            {isLoading ? <LoadingSpinner className="mr-2"/> : 'Get My Results'}
+                            {isLoading ? <LoadingSpinner className="mr-2"/> : <FileCheck className="mr-2" />}
+                            Submit & Get My Results
                         </Button>
                     ) : (
                         <Button onClick={handleNext} size="lg" disabled={isGeneralInfoStep && (!dob || !gender)}>
@@ -714,3 +748,5 @@ export default function AssessmentPage() {
     </div>
   );
 }
+
+    

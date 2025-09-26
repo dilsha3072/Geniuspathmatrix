@@ -282,69 +282,6 @@ export default function AssessmentPage() {
     }
   }, [user, authLoading, router, toast]);
   
-  React.useEffect(() => {
-    if (!isTestActive) return;
-    
-    if (timeLeft <= 0) {
-      if(!submittedRef.current) {
-         toast({
-            title: 'Time is up!',
-            description: 'Submitting your assessment automatically.',
-         });
-         handleSubmit();
-      }
-      return;
-    }
-    
-    const interval = setInterval(() => {
-      setTimeLeft(prev => prev - 1);
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [timeLeft, isTestActive]);
-
-  React.useEffect(() => {
-    if (isTestActive) {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  }, [currentStep, isTestActive]);
-
-  const handleStartAssessment = () => {
-    setIsTestActive(true);
-    setCurrentStep(1);
-  };
-
-  const handleNext = () => setCurrentStep(prev => Math.min(prev + 1, totalSteps));
-  const handleBack = () => setCurrentStep(prev => Math.max(prev - 1, 0));
-
-  const handleAnswerChange = (category: string, questionId: string, value: string) => {
-    setAnswers(prev => ({
-      ...prev,
-      [category]: {
-        ...prev[category],
-        [questionId]: value,
-      },
-    }));
-  };
-  
-  const handleSendParentQuiz = async () => {
-    setIsSendingQuiz(true);
-    const result = await sendParentQuiz({ email: parentEmail, phone: parentPhone });
-    if (result.success) {
-        toast({
-            title: 'Quiz Sent!',
-            description: result.message || 'The parent quiz has been sent successfully.',
-        });
-    } else {
-        toast({
-            variant: 'destructive',
-            title: 'Failed to Send',
-            description: result.error || 'Could not send the parent quiz. Please check the contact details.',
-        });
-    }
-    setIsSendingQuiz(false);
-  };
-
   const handleSubmit = React.useCallback(async () => {
     if (submittedRef.current) return;
     submittedRef.current = true;
@@ -385,6 +322,76 @@ export default function AssessmentPage() {
       submittedRef.current = false;
     }
   }, [user, answers, router, toast]);
+  
+  React.useEffect(() => {
+    if (!isTestActive) return;
+    
+    if (timeLeft <= 0) {
+      if(!submittedRef.current) {
+         toast({
+            title: 'Time is up!',
+            description: 'Submitting your assessment automatically.',
+         });
+         handleSubmit();
+      }
+      return;
+    }
+    
+    const interval = setInterval(() => {
+      setTimeLeft(prev => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeLeft, isTestActive]);
+
+  React.useEffect(() => {
+    if (isTestActive) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [currentStep, isTestActive]);
+
+  const handleStartAssessment = () => {
+    setIsTestActive(true);
+    setCurrentStep(1);
+  };
+
+  const handleNext = () => {
+    setCurrentStep(prev => Math.min(prev + 1, totalSteps));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  const handleBack = () => {
+    setCurrentStep(prev => Math.max(prev - 1, 0));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  const handleAnswerChange = (category: string, questionId: string, value: string) => {
+    setAnswers(prev => ({
+      ...prev,
+      [category]: {
+        ...prev[category],
+        [questionId]: value,
+      },
+    }));
+  };
+  
+  const handleSendParentQuiz = async () => {
+    setIsSendingQuiz(true);
+    const result = await sendParentQuiz({ email: parentEmail, phone: parentPhone });
+    if (result.success) {
+        toast({
+            title: 'Quiz Sent!',
+            description: result.message || 'The parent quiz has been sent successfully.',
+        });
+    } else {
+        toast({
+            variant: 'destructive',
+            title: 'Failed to Send',
+            description: result.error || 'Could not send the parent quiz. Please check the contact details.',
+        });
+    }
+    setIsSendingQuiz(false);
+  };
   
   if (authLoading || !user) {
     return (
@@ -696,7 +703,7 @@ export default function AssessmentPage() {
             
             {isTestActive && (
                 <div className="flex justify-between items-center mt-6">
-                    <Button variant="outline" onClick={handleBack} disabled={currentStep === 0 || currentStep === 1}>
+                    <Button variant="outline" onClick={handleBack} disabled={currentStep <= 1}>
                         <ArrowLeft className="mr-2 h-4 w-4" /> Back
                     </Button>
                     {isLastAssessmentStep ? (

@@ -49,7 +49,7 @@ export const findEducationOptions = ai.defineTool(
             results = results.filter(option => option.country === input.country);
         }
         if (input.maxTuition) {
-            results = results.filter(option => option.annualTuition <= input.maxTuemption);
+            results = results.filter(option => option.annualTuition <= input.maxTuition);
         }
         if (input.programType) {
             results = results.filter(option => option.type === input.programType);

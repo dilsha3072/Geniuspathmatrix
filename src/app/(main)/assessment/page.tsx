@@ -267,6 +267,9 @@ export default function AssessmentPage() {
   const [timeLeft, setTimeLeft] = React.useState(3600); // 60 minutes in seconds
   const [isTestActive, setIsTestActive] = React.useState(false);
   const { toast } = useToast();
+  
+  // Use a ref to make sure we don't call submit multiple times
+  const submittedRef = React.useRef(false);
 
   React.useEffect(() => {
     if (!authLoading && !user) {
@@ -283,7 +286,13 @@ export default function AssessmentPage() {
     if (!isTestActive) return;
     
     if (timeLeft <= 0) {
-      handleSubmit();
+      if(!submittedRef.current) {
+         toast({
+            title: 'Time is up!',
+            description: 'Submitting your assessment automatically.',
+         });
+         handleSubmit();
+      }
       return;
     }
     
@@ -336,15 +345,20 @@ export default function AssessmentPage() {
     setIsSendingQuiz(false);
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = React.useCallback(async () => {
+    if (submittedRef.current) return;
+    submittedRef.current = true;
+
     if (!user) {
       toast({
         variant: 'destructive',
         title: 'Not Logged In',
         description: 'You must be logged in to submit your assessment.',
       });
+      submittedRef.current = false;
       return;
     }
+
     setIsTestActive(false);
     setIsLoading(true);
 
@@ -368,8 +382,9 @@ export default function AssessmentPage() {
         description: result.error || 'Could not generate career suggestions. Please try again.',
       });
       setIsLoading(false);
+      submittedRef.current = false;
     }
-  };
+  }, [user, answers, router, toast]);
   
   if (authLoading || !user) {
     return (
@@ -514,18 +529,18 @@ export default function AssessmentPage() {
           ));
           break;
         case 'cognitive': // This is the combined Cognitive + Skill mapping section
-          let cognitiveQuestionCounter = 0;
+          let questionCounter = 0;
           questionsContent = (
             <div className="space-y-8">
               <div>
                 <h3 className="font-bold text-xl mb-4">Part A: Cognitive Capability</h3>
                 <div className="space-y-6">
                   {assessmentQuestions.cognitive.map((q) => {
-                    cognitiveQuestionCounter++;
+                    questionCounter++;
                     return (
                       <QuestionCard 
                         key={q.id}
-                        question={{...q, question: `${questionNumberOffset + cognitiveQuestionCounter}. ${q.question}`}}
+                        question={{...q, question: `${questionNumberOffset + questionCounter}. ${q.question}`}}
                         options={[]} // options are in the question object for MCQ
                         selectedValue={answers.cognitiveAbilities[q.id]}
                         onChange={(v) => handleAnswerChange('cognitiveAbilities', q.id, v)} 
@@ -538,11 +553,11 @@ export default function AssessmentPage() {
                 <h3 className="font-bold text-xl mb-4">Part B: Skill Mapping</h3>
                 <div className="space-y-6">
                   {assessmentQuestions.skillMapping.map((q) => {
-                    cognitiveQuestionCounter++;
+                    questionCounter++;
                     return (
                       <QuestionCard 
                         key={q.id}
-                        question={{...q, question: `${questionNumberOffset + cognitiveQuestionCounter}. ${q.question}`}}
+                        question={{...q, question: `${questionNumberOffset + questionCounter}. ${q.question}`}}
                         options={ratingLabels.skillMapping}
                         selectedValue={answers.selfReportedSkills[q.id]}
                         onChange={(v) => handleAnswerChange('selfReportedSkills', q.id, v)} 
@@ -561,16 +576,16 @@ export default function AssessmentPage() {
             cvqSections[q.section].push(q);
           });
           
-          let questionCounter = 0;
+          let cvqQuestionCounter = 0;
           questionsContent = Object.entries(cvqSections).map(([sectionTitle, qs]) => (
             <div key={sectionTitle} className="space-y-6">
               <h3 className="font-bold text-xl mb-4">{sectionTitle}</h3>
               {qs.map(q => {
-                questionCounter++;
+                cvqQuestionCounter++;
                 return (
                   <QuestionCard 
                     key={q.id}
-                    question={{ ...q, question: `${questionNumberOffset + questionCounter}. ${q.question}`}}
+                    question={{ ...q, question: `${questionNumberOffset + cvqQuestionCounter}. ${q.question}`}}
                     options={ratingLabels.cvq}
                     selectedValue={answers.cvq[q.id]}
                     onChange={(v) => handleAnswerChange('cvq', q.id, v)} 
@@ -702,5 +717,3 @@ export default function AssessmentPage() {
     </div>
   );
 }
-
-    

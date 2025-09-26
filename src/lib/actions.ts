@@ -16,13 +16,13 @@ export async function getCareerSuggestions(input: SuggestCareersInput & { userId
     const suggestions = await suggestCareers(input);
     
     const userDocRef = db.collection("users").doc(userId);
-    await userDocRef.update({
+    await userDocRef.set({
         assessment: {
             ...input,
             updatedAt: Timestamp.now(),
         },
         careerSuggestions: suggestions,
-    });
+    }, { merge: true });
     
     return { success: true, data: suggestions };
   } catch (error) {
@@ -89,6 +89,7 @@ export async function getMentorResponse(input: MentorInput & { userId: string })
 
     const userDoc = await userDocRef.get();
     if (!userDoc.exists || !userDoc.data()?.mentorChat) {
+         // Use set with merge:true to create the field if it doesn't exist
          await userDocRef.set({ mentorChat: [] }, { merge: true });
     }
     

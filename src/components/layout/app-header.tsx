@@ -1,3 +1,4 @@
+
 'use client';
 
 import { SidebarTrigger } from '@/components/ui/sidebar';
@@ -23,7 +24,7 @@ type AppHeaderProps = {
   showAuthButtons?: boolean;
 };
 
-export function AppHeader({ title, showAuthButtons = false }: AppHeaderProps) {
+export function AppHeader({ title, showAuthButtons = true }: AppHeaderProps) {
   const { user, logout } = useAuth();
   const router = useRouter();
   const [authMode, setAuthMode] = React.useState<'login' | 'signup' | null>(null);

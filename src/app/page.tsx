@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowRight, Bot, ClipboardCheck, Compass, Goal } from 'lucide-react';
 import * as React from 'react';
+import { AppHeader } from '@/components/layout/app-header';
 
 const featureCards = [
     {
@@ -40,7 +41,9 @@ const featureCards = [
 
 export default function Home() {
   return (
-        <main className="flex-1 p-8 md:p-10 lg:p-12">
+    <>
+      <AppHeader title="Home" />
+      <main className="flex-1 p-8 md:p-10 lg:p-12">
             <div className="mx-auto max-w-7xl space-y-12">
                 <div className="space-y-4">
                     <h1 className="text-4xl font-bold font-headline tracking-tight text-foreground">Welcome to Your Career Journey</h1>
@@ -74,6 +77,7 @@ export default function Home() {
                     ))}
                 </div>
             </div>
-        </main>
+      </main>
+    </>
   );
 }

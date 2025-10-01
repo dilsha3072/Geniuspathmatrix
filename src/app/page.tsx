@@ -41,7 +41,7 @@ const featureCards = [
 
 export default function Home() {
   return (
-    <>
+    <div className="flex min-h-0 flex-1 flex-col">
       <AppHeader title="Home" />
       <main className="flex-1 p-8 md:p-10 lg:p-12">
             <div className="mx-auto max-w-7xl space-y-12">
@@ -78,6 +78,6 @@ export default function Home() {
                 </div>
             </div>
       </main>
-    </>
+    </div>
   );
 }

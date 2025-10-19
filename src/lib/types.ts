@@ -1,5 +1,4 @@
 
-
 import type { SuggestCareersOutput } from "@/ai/flows/ai-career-suggestions";
 import type { SwotAnalysisOutput } from "@/ai/flows/swot-analysis-for-career";
 import type { GenerateGoalsOutput } from "@/ai/flows/generate-goals-flow";
@@ -28,4 +27,3 @@ export interface CareerPath {
     responsibilities: string[];
     skillMatch: { skill: string; match: number }[];
 }
-

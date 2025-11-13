@@ -305,6 +305,13 @@ export default function AssessmentPage() {
     setSubmissionStatus('submitting');
 
     const formattedAnswers = {
+      generalInfo: {
+        dob: dob ? format(dob, 'yyyy-MM-dd') : '',
+        gender,
+        classOfStudy,
+        place,
+        schoolOrCollege,
+      },
       personality: Object.entries(answers.personality).map(([k, v]) => `${assessmentQuestions.personality.find(q=>q.id===k)?.question}: ${ratingLabels.personality.find(l=>l.value===v)?.label}`).join('; '),
       interest: Object.entries(answers.interest).map(([k, v]) => `${assessmentQuestions.interest.find(q=>q.id===k)?.question}: ${ratingLabels.interest.find(l=>l.value===v)?.label}`).join('; '),
       cognitiveAbilities: Object.entries(answers.cognitiveAbilities).map(([k, v]) => `${assessmentQuestions.cognitive.find(q=>q.id===k)?.question}: ${v}`).join('; '),
@@ -339,7 +346,7 @@ export default function AssessmentPage() {
       });
       submittedRef.current = false;
     }
-  }, [user, answers, router, toast, waitForReport]);
+  }, [user, answers, router, toast, waitForReport, dob, gender, classOfStudy, place, schoolOrCollege]);
   
   React.useEffect(() => {
     if (!isTestActive) return;
@@ -749,5 +756,3 @@ export default function AssessmentPage() {
     </div>
   );
 }
-
-    

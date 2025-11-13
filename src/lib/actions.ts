@@ -7,8 +7,15 @@ import { getSocraticResponse, MentorInput } from '@/ai/flows/mentor-flow';
 import { db } from '@/lib/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 
+type GeneralInfo = {
+    dob: string;
+    gender: string;
+    classOfStudy: string;
+    place: string;
+    schoolOrCollege: string;
+};
 
-export async function getCareerSuggestions(input: SuggestCareersInput & { userId: string }) {
+export async function getCareerSuggestions(input: SuggestCareersInput & { userId: string, generalInfo: GeneralInfo }) {
   try {
     const userId = input.userId;
     if (!userId) throw new Error("User not authenticated.");

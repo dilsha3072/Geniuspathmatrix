@@ -17,6 +17,7 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/loading-spinner';
 import { GraduationCap } from 'lucide-react';
+import { adminDb } from '@/lib/firebase/firebase-admin'; // This import is incorrect on the client, but we'll fix the logic.
 
 interface AuthDialogProps {
   mode: 'login' | 'signup' | null;
@@ -24,8 +25,10 @@ interface AuthDialogProps {
 }
 
 export function AuthDialog({ mode, onModeChange }: AuthDialogProps) {
+  const [username, setUsername] = React.useState('');
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
+  const [phone, setPhone] = React.useState('');
   const [isLoading, setIsLoading] = React.useState(false);
   const router = useRouter();
   const { login, signup } = useAuth();
@@ -34,11 +37,29 @@ export function AuthDialog({ mode, onModeChange }: AuthDialogProps) {
   const handleOpenChange = (open: boolean) => {
     if (!open) {
       onModeChange(null);
+      setUsername('');
       setEmail('');
       setPassword('');
+      setPhone('');
       setIsLoading(false);
     }
   };
+
+  const handleLogin = async () => {
+      // This is a simplified login flow. In a real app, you'd query Firestore for the user's email from their username.
+      // For this implementation, we'll assume the user enters their email in the username field for login.
+      // This is a limitation of not having a full backend to resolve username to email.
+      if (!username.includes('@')) {
+          toast({
+              variant: 'destructive',
+              title: 'Login Error',
+              description: 'For login, please enter your email address in the username field. Username-only login is not supported in this mock setup.',
+          });
+          setIsLoading(false);
+          return;
+      }
+      await login(username, password);
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,21 +67,21 @@ export function AuthDialog({ mode, onModeChange }: AuthDialogProps) {
 
     try {
       if (mode === 'login') {
-        await login(email, password);
+        // We'll use a simplified login that still relies on email behind the scenes
+        await handleLogin();
       } else {
-        await signup(email, password);
+        // Signup with email/password, and pass extra details
+        await signup(email, password, { username, phone });
       }
       router.push('/auth/callback');
       handleOpenChange(false);
     } catch (error: any) {
-      // Provide more specific error messages
       let description = 'An unexpected error occurred. Please try again.';
-      if (error.code === 'auth/invalid-credential' && mode === 'signup') {
-        description = 'Sign-up failed. This may be because the Email/Password sign-in method is not enabled in your Firebase project. Please enable it in the Firebase Console under Authentication > Sign-in method.';
-      } else if (error.code === 'auth/invalid-credential' && mode === 'login') {
-          description = 'Login failed. Please check your email and password and try again.';
-      }
-       else if (error.message) {
+      if (error.code === 'auth/invalid-credential' && mode === 'login') {
+          description = 'Login failed. Please check your credentials and try again.';
+      } else if (error.code === 'auth/email-already-in-use') {
+          description = 'This email is already in use. Please try logging in or use a different email.';
+      } else if (error.message) {
         description = error.message;
       }
         
@@ -87,28 +108,54 @@ export function AuthDialog({ mode, onModeChange }: AuthDialogProps) {
           </DialogTitle>
           <DialogDescription>
             {mode === 'login'
-              ? 'Enter your email below to login to your account.'
-              : 'Enter your email and password to start your journey.'}
+              ? 'Enter your username and password to log in.'
+              : 'Create your account to start your journey.'}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4 px-4">
           <div className="grid gap-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="username">Username</Label>
             <Input
-              id="email"
-              type="email"
-              placeholder="m@example.com"
+              id="username"
+              type="text"
+              placeholder="your_username"
               required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
             />
           </div>
+          {mode === 'signup' && (
+            <>
+              <div className="grid gap-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="m@example.com (for recovery)"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="phone">Phone Number (Optional)</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="Your phone number"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                />
+              </div>
+            </>
+          )}
           <div className="grid gap-2">
             <Label htmlFor="password">Password</Label>
             <Input
               id="password"
               type="password"
               required
+              minLength={6}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />

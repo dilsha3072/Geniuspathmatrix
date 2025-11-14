@@ -11,7 +11,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, pass: string) => Promise<any>;
-  signup: (email: string, pass: string) => Promise<any>;
+  signup: (email: string, pass: string, details: { username: string, phone: string }) => Promise<any>;
   logout: () => Promise<void>;
 }
 
@@ -36,14 +36,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return signInWithEmailAndPassword(auth, email, pass);
   };
   
-  const signup = async (email: string, pass: string) => {
+  const signup = async (email: string, pass: string, details: { username: string, phone: string }) => {
     const auth = getFirebaseAuth();
     const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
     const user = userCredential.user;
     
     // Create user document in Firestore via a server action
     if (user) {
-      await createUserDocument({uid: user.uid, email: user.email});
+      await createUserDocument({
+        uid: user.uid, 
+        email: user.email, 
+        username: details.username,
+        phone: details.phone
+      });
     }
     
     return userCredential;

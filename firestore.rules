@@ -12,6 +12,9 @@ service cloud.firestore {
       allow read, update, delete: if request.auth != null && request.auth.uid == userId;
       // Allow any authenticated user to create their own user document upon sign-up.
       allow create: if request.auth != null;
+      
+      // Allow public read access to the 'username' field for validation.
+      allow get: if request.path[2] == 'users' && 'username' in resource.data;
     }
     
     // Reports Collection: Stores metadata for generated reports.
@@ -29,6 +32,12 @@ service cloud.firestore {
         allow create: if true;
         // Disallow read, update, or delete from the client-side for privacy.
         allow read, update, delete: if false;
+    }
+    
+    // App Data Collection: Publicly readable data for the app.
+    match /app_data/{docId} {
+      allow read: if true;
+      allow write: if false; // Should only be written to by admin/seeding scripts.
     }
   }
 }

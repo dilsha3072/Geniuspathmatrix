@@ -15,12 +15,6 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Log the loaded environment variables to confirm they are correct
-console.log("Firebase Config Loaded:", {
-    projectId: firebaseConfig.projectId,
-    apiKeyIsDefined: !!firebaseConfig.apiKey,
-});
-
 // Initialize Firebase for client-side, handling hot-reloading
 let app: FirebaseApp;
 if (!getApps().length) {
@@ -34,3 +28,4 @@ const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
 
 export { app, auth, db, googleProvider };
+

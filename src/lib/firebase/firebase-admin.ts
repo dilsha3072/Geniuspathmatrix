@@ -1,5 +1,5 @@
 
-import { getApps, initializeApp, cert, getApp } from "firebase-admin/app";
+import { getApps, initializeApp, cert } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
 
@@ -24,3 +24,4 @@ const adminDb = getFirestore();
 const adminAuth = getAuth();
 
 export { adminDb, adminAuth };
+

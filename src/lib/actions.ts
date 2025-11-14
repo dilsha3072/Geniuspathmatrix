@@ -4,11 +4,9 @@
 import { adminDb } from '@/lib/firebase/firebase-admin';
 import type { GoalPlan, CareerSuggestion } from './types';
 import { FieldValue } from 'firebase-admin/firestore';
-
-// Mock types as AI flows are removed
-type SuggestCareersInput = any;
-type GenerateGoalsInput = any;
-type MentorInput = any;
+// import { suggestCareers } from '@/ai/flows/ai-career-suggestions';
+// import { generateGoals } from '@/ai/flows/generate-goals-flow';
+// import { getSocraticResponse } from '@/ai/flows/mentor-flow';
 
 
 type GeneralInfo = {
@@ -18,6 +16,25 @@ type GeneralInfo = {
     place: string;
     schoolOrCollege: string;
 };
+
+type SuggestCareersInput = {
+    personality: string;
+    interest: string;
+    cognitiveAbilities: string;
+    selfReportedSkills: string;
+    cvq: string;
+}
+
+type GenerateGoalsInput = {
+    careerName: string;
+    studentProfile: string;
+    timeframes: string[];
+}
+
+type MentorInput = {
+    messages: { role: 'user' | 'model', content: string }[];
+    studentProfile: string;
+}
 
 
 export async function createUserDocument(user: { uid: string; email: string | null }) {
@@ -42,35 +59,48 @@ export async function getCareerSuggestions(input: SuggestCareersInput & { userId
     const userId = input.userId;
     if (!userId) throw new Error("User not authenticated.");
 
-    // 1. Get career suggestions from the AI
-    // const suggestions = await suggestCareers(input);
+    // MOCK: Return mock career suggestions
     const suggestions: CareerSuggestion[] = [
         {
             careerName: "Software Engineer",
-            careerDescription: "Software engineers design, develop, and maintain software systems. They use their programming skills to create everything from mobile apps to large-scale enterprise systems.",
-            matchExplanation: "Your strong logical reasoning skills and interest in building things make you a great fit for software engineering. Your personality suggests you enjoy solving complex problems.",
+            careerDescription: "Designs, develops, and maintains software applications. It's a field with high demand and diverse opportunities.",
+            matchExplanation: "Your strong logical reasoning and interest in building things make this a great fit. Your personality suggests you enjoy complex problem-solving.",
             swotAnalysis: `**Strengths:**
-- Strong analytical and problem-solving skills.
-- High demand for this profession.
+- High problem-solving skills.
+- Interest in technology.
 
 **Weaknesses:**
-- Requires continuous learning to keep up with new technologies.
+- Limited experience with large-scale projects.
 
 **Opportunities:**
-- Can work in various industries.
-- Remote work possibilities.
+- High demand for software engineers.
+- Many free online resources to learn.
 
 **Threats:**
-- Competition is high for entry-level positions.`
+- Fast-paced industry requires constant learning.
+- AI code generation tools might change the landscape.`
         },
         {
             careerName: "Graphic Designer",
-            careerDescription: "Graphic designers create visual concepts, using computer software or by hand, to communicate ideas that inspire, inform, and captivate consumers.",
-            matchExplanation: "Your 'Artistic' interest and 'Openness' on your personality test indicate a strong creative side, which is perfect for graphic design.",
-            swotAnalysis: ""
+            careerDescription: "Creates visual concepts to communicate ideas that inspire, inform, or captivate consumers. They work with both text and images.",
+            matchExplanation: "Your artistic interests and creative personality are a perfect match for this career. Your attention to detail is also a great asset.",
+            swotAnalysis: `**Strengths:**
+- High creativity and artistic interest.
+- Good attention to detail.
+
+**Weaknesses:**
+- May need to build a stronger portfolio.
+
+**Opportunities:**
+- Freelance opportunities are abundant.
+- Growing need for digital design skills.
+
+**Threats:**
+- Competitive field.
+- AI image generation tools.`
         },
     ];
-
+    
     // 2. Save assessment data and suggestions to the user's document
     const userDocRef = adminDb.collection("users").doc(userId);
     await userDocRef.set({
@@ -108,12 +138,15 @@ export async function getGeneratedGoals(input: GenerateGoalsInput & { userId: st
         const userId = input.userId;
         if (!userId) throw new Error("User not authenticated.");
 
-        // const goals = await generateGoals(input);
+        // MOCK: Return mock goals
         const goals: GoalPlan = {
-            "1-year": [
-                { id: 'acad-1', title: 'Complete an online course in Python', category: 'Academic', description: 'Finish a Python for Beginners course on Coursera or edX within 6 months.'},
-                { id: 'skill-1', title: 'Build a personal portfolio website', category: 'Skill', description: 'Create and deploy a simple website to showcase your projects.'},
-                { id: 'net-1', title: 'Attend a local tech meetup', category: 'Networking', description: 'Find and attend at least one tech meetup in your area.'}
+            '1-year': [
+                { id: 'acad-1', title: 'Complete an online Python course', category: 'Academic', description: 'Finish a comprehensive Python for beginners course on Coursera or Udemy within 6 months.' },
+                { id: 'skill-1', title: 'Build a personal portfolio website', category: 'Skill', description: 'Create and deploy a simple website to showcase your projects using HTML, CSS, and basic JavaScript.' }
+            ],
+            '3-year': [
+                { id: 'acad-2', title: 'Achieve a relevant certification', category: 'Academic', description: 'Obtain a certification like AWS Certified Cloud Practitioner to demonstrate foundational cloud knowledge.' },
+                { id: 'net-1', title: 'Attend 3 industry meetups', category: 'Networking', description: 'Find and attend local or virtual meetups related to your chosen career path.' }
             ]
         };
         
@@ -172,8 +205,8 @@ export async function getMentorResponse(input: MentorInput & { userId: string })
     const userId = input.userId;
     if (!userId) throw new Error("User not authenticated.");
     
-    // const response = await getSocraticResponse(input);
-    const response = "That's a great question. What part of that feels most important to you right now?";
+    // MOCK: Return a mock Socratic response
+    const response = "That's an interesting thought. Can you tell me more about what led you to that conclusion?";
     
     const userDocRef = adminDb.collection("users").doc(userId);
     const userMessage = input.messages[input.messages.length - 1];

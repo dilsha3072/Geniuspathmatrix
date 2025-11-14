@@ -2,7 +2,14 @@
 'use server';
 
 import { adminDb } from '@/lib/firebase/firebase-admin';
+import type { GoalPlan, CareerSuggestion } from './types';
 import { FieldValue } from 'firebase-admin/firestore';
+
+// Mock types as AI flows are removed
+type SuggestCareersInput = any;
+type GenerateGoalsInput = any;
+type MentorInput = any;
+
 
 type GeneralInfo = {
     dob: string;
@@ -11,11 +18,6 @@ type GeneralInfo = {
     place: string;
     schoolOrCollege: string;
 };
-
-// Define types here as imports are commented out
-type SuggestCareersInput = any;
-type GenerateGoalsInput = any;
-type MentorInput = any;
 
 
 export async function createUserDocument(user: { uid: string; email: string | null }) {
@@ -40,8 +42,34 @@ export async function getCareerSuggestions(input: SuggestCareersInput & { userId
     const userId = input.userId;
     if (!userId) throw new Error("User not authenticated.");
 
-    // This functionality was disabled to fix a build error.
-    const suggestions = [{careerName: 'Mock Career', careerDescription: 'A mock career.', swotAnalysis: 'Strengths: Mock, Weaknesses: Mock, Opportunities: Mock, Threats: Mock', matchExplanation: 'This is a mock career.'}];
+    // 1. Get career suggestions from the AI
+    // const suggestions = await suggestCareers(input);
+    const suggestions: CareerSuggestion[] = [
+        {
+            careerName: "Software Engineer",
+            careerDescription: "Software engineers design, develop, and maintain software systems. They use their programming skills to create everything from mobile apps to large-scale enterprise systems.",
+            matchExplanation: "Your strong logical reasoning skills and interest in building things make you a great fit for software engineering. Your personality suggests you enjoy solving complex problems.",
+            swotAnalysis: `**Strengths:**
+- Strong analytical and problem-solving skills.
+- High demand for this profession.
+
+**Weaknesses:**
+- Requires continuous learning to keep up with new technologies.
+
+**Opportunities:**
+- Can work in various industries.
+- Remote work possibilities.
+
+**Threats:**
+- Competition is high for entry-level positions.`
+        },
+        {
+            careerName: "Graphic Designer",
+            careerDescription: "Graphic designers create visual concepts, using computer software or by hand, to communicate ideas that inspire, inform, and captivate consumers.",
+            matchExplanation: "Your 'Artistic' interest and 'Openness' on your personality test indicate a strong creative side, which is perfect for graphic design.",
+            swotAnalysis: ""
+        },
+    ];
 
     // 2. Save assessment data and suggestions to the user's document
     const userDocRef = adminDb.collection("users").doc(userId);
@@ -58,10 +86,10 @@ export async function getCareerSuggestions(input: SuggestCareersInput & { userId
     const reportData = {
         userId: userId,
         assessmentSummary: {
-            personality: input.personality.substring(0, 100) + '...', // Store a summary
-            interest: input.interest.substring(0, 100) + '...',
-            cognitiveAbilities: input.cognitiveAbilities.substring(0, 100) + '...',
-            cvq: input.cvq.substring(0, 100) + '...',
+            personality: input.personality?.substring(0, 100) + '...', // Store a summary
+            interest: input.interest?.substring(0, 100) + '...',
+            cognitiveAbilities: input.cognitiveAbilities?.substring(0, 100) + '...',
+            cvq: input.cvq?.substring(0, 100) + '...',
         },
         generatedAt: FieldValue.serverTimestamp(),
     };
@@ -80,11 +108,13 @@ export async function getGeneratedGoals(input: GenerateGoalsInput & { userId: st
         const userId = input.userId;
         if (!userId) throw new Error("User not authenticated.");
 
-        // This functionality was disabled to fix a build error.
-        const goals = {
-            "1-year": [{title: 'Mock Goal 1', category: 'Academic', description: 'A mock academic goal.'}],
-            "3-year": [{title: 'Mock Goal 2', category: 'Skill', description: 'A mock skill goal.'}],
-            "5-year": [{title: 'Mock Goal 3', category: 'Networking', description: 'A mock networking goal.'}],
+        // const goals = await generateGoals(input);
+        const goals: GoalPlan = {
+            "1-year": [
+                { id: 'acad-1', title: 'Complete an online course in Python', category: 'Academic', description: 'Finish a Python for Beginners course on Coursera or edX within 6 months.'},
+                { id: 'skill-1', title: 'Build a personal portfolio website', category: 'Skill', description: 'Create and deploy a simple website to showcase your projects.'},
+                { id: 'net-1', title: 'Attend a local tech meetup', category: 'Networking', description: 'Find and attend at least one tech meetup in your area.'}
+            ]
         };
         
         const userDocRef = adminDb.collection("users").doc(userId);
@@ -142,8 +172,8 @@ export async function getMentorResponse(input: MentorInput & { userId: string })
     const userId = input.userId;
     if (!userId) throw new Error("User not authenticated.");
     
-    // This functionality was disabled to fix a build error.
-    const response = "This is a mock response from the mentor AI. The AI functionality has been temporarily disabled to resolve a dependency issue.";
+    // const response = await getSocraticResponse(input);
+    const response = "That's a great question. What part of that feels most important to you right now?";
     
     const userDocRef = adminDb.collection("users").doc(userId);
     const userMessage = input.messages[input.messages.length - 1];
@@ -202,106 +232,17 @@ export async function getUserData(userId: string) {
 
 export async function getAppData(docId: string) {
     try {
-        const docRef = adminDb.collection("app_data").doc(docId);
-        const docSnap = await docRef.get();
+        const appDataRef = adminDb.collection("app_data").doc(docId);
+        const docSnap = await appDataRef.get();
+
         if (docSnap.exists) {
             return { success: true, data: docSnap.data() };
         } else {
-            return { success: false, data: null, error: `Document ${docId} not found.` };
+            return { success: false, error: `Document ${docId} not found.` };
         }
     } catch (error) {
-        console.error(`Error fetching app_data/${docId}:`, error);
+        console.error('Error fetching app data:', error);
         const errorMessage = error instanceof Error ? error.message : 'Failed to fetch app data.';
         return { success: false, error: errorMessage };
     }
 }
-
-export async function seedDatabase() {
-    try {
-        const batch = adminDb.batch();
-
-        const assessmentData = {
-            "sections": [
-                {"id": "personality", "title": "Personality Test", "questions": 10, "time": 15, "instructions": "Rate how much you agree or disagree with the following statements about yourself."},
-                {"id": "interest", "title": "Interest Profiler", "questions": 10, "time": 15, "instructions": "Rate how much you like or dislike the following activities."},
-                {"id": "cognitive", "title": "Cognitive & Skill Assessment", "questions": 10, "time": 20, "instructions": "This section has two parts. Answer the multiple-choice cognitive questions and then rate your confidence in the listed skills."},
-                {"id": "cvq", "title": "Career Values Quiz", "questions": 10, "time": 10, "instructions": "Rate how important the following values are to you in a career."}
-            ],
-            "questions": {
-                "personality": [
-                    {"id": "p1", "question": "I am the life of the party."},
-                    {"id": "p2", "question": "I am always prepared."},
-                    {"id": "p3", "question": "I get stressed out easily."},
-                    {"id": "p4", "question": "I have a rich vocabulary."},
-                    {"id": "p5", "question": "I am not interested in other people's problems."},
-                    {"id": "p6", "question": "I leave my belongings around."},
-                    {"id": "p7", "question": "I am relaxed most of the time."},
-                    {"id": "p8", "question": "I have difficulty understanding abstract ideas."},
-                    {"id": "p9", "question": "I feel comfortable around people."},
-                    {"id": "p10", "question": "I pay attention to details."}
-                ],
-                "interest": [
-                    {"id": "i1", "question": "Building kitchen cabinets"},
-                    {"id": "i2", "question": "Developing a new medicine"},
-                    {"id": "i3", "question": "Writing books or plays"},
-                    {"id": "i4", "question": "Teaching school"},
-                    {"id": "i5", "question": "Buying and selling stocks and bonds"},
-                    {"id": "i6", "question": "Operating a copy machine"},
-                    {"id": "i7", "question": "Assembling electronic parts"},
-                    {"id": "i8", "question": "Doing scientific experiments"},
-                    {"id": "i9", "question": "Singing in a band"},
-                    {"id": "i10", "question": "Helping people with personal or emotional problems"}
-                ],
-                "cognitive": [
-                    {"id": "c1", "question": "Which number logically follows this series? 4, 6, 9, 6, 14, 6, ...", "options": ["6", "17", "19", "21"]},
-                    {"id": "c2", "question": "A is B's sister. C is B's mother. D is C's father. E is D's mother. Then, how is A related to D?", "options": ["Grandfather", "Grandmother", "Daughter", "Granddaughter"]},
-                    {"id": "c3", "question": "An animal shelter has a 30% discount on all cats, and a 10% discount on all dogs. If a cat costs $100 and a dog costs $150, what is the total cost for one of each?", "options": ["$200", "$205", "$210", "$215"]},
-                    {"id": "c4", "question": "If you rearrange the letters 'CIFAIPC' you would have the name of a(n):", "options": ["City", "Animal", "Ocean", "River"]},
-                    {"id": "c5", "question": "What is the missing number in the series? 2, 5, 10, 17, ?, 37", "options": ["24", "26", "28", "30"]}
-                ],
-                "skillMapping": [
-                    {"id": "s1", "question": "Analyzing data and drawing conclusions"},
-                    {"id": "s2", "question": "Leading a team to achieve a goal"},
-                    {"id": "s3", "question": "Coming up with creative ideas"},
-                    {"id": "s4", "question": "Organizing your work and managing time effectively"},
-                    {"id": "s5", "question": "Persuading or influencing others"}
-                ],
-                "cvq": [
-                    {"id": "v1", "section": "Independence", "question": "I want to be able to make my own decisions."},
-                    {"id": "v2", "section": "Independence", "question": "I want to be able to work on my own."},
-                    {"id": "v3", "section": "Support", "question": "I want a supervisor who backs up the workers with management."},
-                    {"id": "v4", "section": "Support", "question": "I want the company to administer its policies fairly."},
-                    {"id": "v5", "section": "Relationships", "question": "I want to have co-workers who are easy to get along with."},
-                    {"id": "v6", "section": "Relationships", "question": "I want to be able to do things for other people."},
-                    {"id": "v7", "section": "Working Conditions", "question": "I want to have a job where I do not have to worry about being laid off."},
-                    {"id": "v8", "section": "Working Conditions", "question": "I want to be busy all the time."},
-                    {"id": "v9", "section": "Achievement", "question": "I want to make use of my abilities and skills."},
-                    {"id": "v10", "section": "Achievement", "question": "I want to have a sense of accomplishment from my job."}
-                ]
-            }
-        };
-        const assessmentDocRef = adminDb.collection('app_data').doc('assessment');
-        batch.set(assessmentDocRef, assessmentData);
-        
-        const reportsData = {
-            "list": [
-                {"id": "pathxplore", "title": "PathXplore Full Report", "description": "A comprehensive report detailing your assessment results and top career matches.", "requiresAssessment": true},
-                {"id": "goalmint", "title": "GoalMint Action Plan", "description": "A printable version of your 1, 3, and 5-year career goals.", "requiresAssessment": true, "requiresGoalPlan": true},
-                {"id": "swot", "title": "SWOT Analysis Summary", "description": "A summary of the Strengths, Weaknesses, Opportunities, and Threats for your top career choice.", "requiresAssessment": true},
-                {"id": "parent", "title": "Parent/Guardian Summary", "description": "A shareable summary of results and recommendations for parents or guardians.", "requiresAssessment": true}
-            ]
-        };
-        const reportsDocRef = adminDb.collection('app_data').doc('reports');
-        batch.set(reportsDocRef, reportsData);
-        
-        await batch.commit();
-        
-        return { success: true, message: 'Database seeded successfully.' };
-    } catch (error) {
-        console.error('Error seeding database:', error);
-        const errorMessage = error instanceof Error ? error.message : 'Failed to seed database.';
-        return { success: false, error: errorMessage };
-    }
-}
-
-    

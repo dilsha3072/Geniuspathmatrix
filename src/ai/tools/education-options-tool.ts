@@ -1,209 +1,75 @@
-'use client';
+'use server';
 
-import * as React from 'react';
-import { AppHeader } from '@/components/layout/app-header';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
-import { Send, User, Bot, CornerDownLeft } from 'lucide-react';
-import { getMentorResponse, getUserData } from '@/lib/actions';
-import { LoadingSpinner } from '@/components/loading-spinner';
-import { cn } from '@/lib/utils';
-// import type { Message } from '@/ai/flows/mentor-flow';
-import type { CareerSuggestion, GoalPlan } from '@/lib/types';
-import { useAuth } from '@/contexts/auth-context';
-import { useToast } from '@/hooks/use-toast';
+/**
+ * @fileOverview A tool for the Mentor AI to look up educational paths.
+ * 
+ * - getEducationOptions - A Genkit tool definition for finding education options.
+ */
 
-// Mock type as AI flow is removed
-type Message = {
-    role: 'user' | 'model';
-    content: string;
-};
+import { ai } from '@/ai/genkit';
+import { z } from 'genkit';
 
-export default function MentorsPage() {
-  const { user, loading: authLoading } = useAuth();
-  const { toast } = useToast();
-  const [messages, setMessages] = React.useState<Message[]>([]);
-  const initialMessage: Message = {
-    role: 'model',
-    content: "Hello! I am your MentorSuite AI, a Socratic mirror designed to help you reflect on your career path. What's on your mind today?",
-  };
-  const [input, setInput] = React.useState('');
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [studentProfile, setStudentProfile] = React.useState('');
-  const [isDataLoading, setIsDataLoading] = React.useState(true);
-  const messagesEndRef = React.useRef<HTMLDivElement>(null);
+const EducationOptionsInputSchema = z.object({
+  careerName: z.string().describe('The name of the career to find educational options for.'),
+  level: z.enum(['certificate', 'degree', 'online course']).optional().describe('The level of education to search for.'),
+});
 
-  React.useEffect(() => {
-    async function loadData() {
-      if (authLoading) return;
-      if (!user) {
-        setIsDataLoading(false);
-        return;
-      }
-      
-      setIsDataLoading(true);
-      try {
-        const res = await getUserData(user.uid);
-        if (res.success && res.data) {
-            let profile = "Student's Path-GeniX Profile:\n\n";
-            if (res.data.careerSuggestions) {
-                const results: CareerSuggestion[] = res.data.careerSuggestions;
-                profile += "=== PathXplore Career Suggestions ===\n";
-                results.slice(0, 3).forEach((career, index) => {
-                    profile += `${index + 1}. ${career.careerName} (Top Match: ${index === 0})\n`;
-                    profile += `   - Match Explanation: ${career.matchExplanation}\n`;
-                });
-                profile += "\n";
-            }
+const EducationOptionSchema = z.object({
+  programName: z.string(),
+  institution: z.string(),
+  type: z.string().describe('E.g., Bachelor of Science, Professional Certificate'),
+  duration: z.string().describe('E.g., 4 years, 6 months'),
+});
 
-            if (res.data.goalPlan) {
-                const goals: GoalPlan = res.data.goalPlan;
-                profile += "=== GoalMint Plan ===\n";
-                Object.entries(goals).forEach(([timeframe, goalList]) => {
-                    profile += `**${timeframe.replace('-', ' ')} Goals:**\n`;
-                    goalList.forEach(goal => {
-                    profile += `   - [${goal.category}] ${goal.title}\n`;
-                    });
-                });
-                profile += "\n";
-            }
-            setStudentProfile(profile);
+const EducationOptionsOutputSchema = z.array(EducationOptionSchema);
 
-            if (res.data.mentorChat) {
-                setMessages(res.data.mentorChat);
-            }
-        }
-      } catch (e) {
-        toast({
-            variant: 'destructive',
-            title: 'Could not load data',
-            description: 'There was a problem loading your profile data.',
-        });
-        setStudentProfile("Could not load student profile data.");
-      } finally {
-        setIsDataLoading(false);
-      }
-    }
-    loadData();
-  }, [user, authLoading, toast]);
+// This is a mock tool. In a real application, this would query a database
+// of educational programs or an external API like Coursera or a university search API.
+const mockEducationDB: z.infer<typeof EducationOptionsOutputSchema> = [
+    { programName: "Bachelor of Science in Computer Science", institution: "State University", type: "Degree", duration: "4 years" },
+    { programName: "Data Science Professional Certificate", institution: "Tech Institute Online", type: "Certificate", duration: "9 months" },
+    { programName: "Introduction to Graphic Design", institution: "Design Academy", type: "Online Course", duration: "8 weeks" },
+    { programName: "Full-Stack Web Development Bootcamp", institution: "Code Labs", type: "Certificate", duration: "6 months" },
+    { programName: "Master of Business Administration (MBA)", institution: "Commerce College", type: "Degree", duration: "2 years" },
+    { programName: "Digital Marketing Specialization", institution: "Online University", type: "Online Course", duration: "7 months" },
+];
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
 
-  React.useEffect(() => {
-    scrollToBottom();
-  }, [messages, isLoading]);
-
-  const handleSendMessage = async (e?: React.FormEvent) => {
-    e?.preventDefault();
-    if (!input.trim() || isLoading || !user) return;
-
-    const userMessage: Message = { role: 'user', content: input };
-    const currentMessages = [...messages, userMessage];
-    setMessages(currentMessages);
-    setInput('');
-    setIsLoading(true);
-
-    const result = await getMentorResponse({ messages: currentMessages, studentProfile, userId: user.uid });
+export const getEducationOptions = ai.defineTool(
+  {
+    name: 'getEducationOptions',
+    description: 'Looks up potential educational programs, degrees, or courses for a given career path. Use this when a student asks about what to study or where to go to school.',
+    inputSchema: EducationOptionsInputSchema,
+    outputSchema: EducationOptionsOutputSchema,
+  },
+  async (input) => {
+    console.log(`[EducationTool] Searching for options for career: ${input.careerName} at level: ${input.level || 'any'}`);
     
-    if (result.success && result.data) {
-        const modelMessage: Message = { role: 'model', content: result.data };
-        setMessages(prev => [...prev, modelMessage]);
-    } else {
-        const errorMessage: Message = { role: 'model', content: "I'm sorry, I encountered an error and couldn't process your message. Please try again." };
-        setMessages(prev => [...prev, errorMessage]);
-         toast({
-            variant: 'destructive',
-            title: 'Mentor AI Error',
-            description: result.error || 'Failed to get a response.',
-        });
-    }
+    // Simulate a database lookup
+    const results = mockEducationDB.filter(option => {
+        const careerLower = input.careerName.toLowerCase();
+        const programLower = option.programName.toLowerCase();
+        
+        let match = false;
+        if (careerLower.includes('computer') || careerLower.includes('software') || careerLower.includes('web')) {
+            match = programLower.includes('computer science') || programLower.includes('web development');
+        }
+        if (careerLower.includes('data')) {
+            match = programLower.includes('data science');
+        }
+         if (careerLower.includes('design')) {
+            match = programLower.includes('graphic design');
+        }
+        if (careerLower.includes('business') || careerLower.includes('marketing')) {
+            match = programLower.includes('business') || programLower.includes('marketing');
+        }
 
-    setIsLoading(false);
-  };
-  
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        handleSendMessage();
-    }
-  };
-  
-  if (authLoading || isDataLoading) {
-      return (
-        <div className="flex min-h-0 flex-1 flex-col">
-            <AppHeader title="MentorSuite AI" />
-            <main className="flex-1 flex items-center justify-center">
-                <LoadingSpinner className="h-10 w-10" />
-            </main>
-        </div>
-      )
+        if (input.level) {
+            return match && option.type.toLowerCase().includes(input.level);
+        }
+        return match;
+    });
+
+    return results.length > 0 ? results : mockEducationDB.slice(0, 2); // return top 2 if no specific match
   }
-  
-  const displayMessages = messages.length > 0 ? [initialMessage, ...messages] : [initialMessage];
-
-  return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <AppHeader title="MentorSuite AI" />
-      <main className="flex-1 p-4 md:p-6 lg:p-8 flex flex-col">
-        <div className="max-w-4xl mx-auto w-full flex-1 flex flex-col">
-          <Card className="flex-1 flex flex-col">
-              <CardHeader>
-                  <CardTitle className="font-headline">Your Socratic Mirror</CardTitle>
-                  <CardDescription>
-                      Engage in a reflective conversation to explore your career and educational path.
-                  </CardDescription>
-              </CardHeader>
-            <CardContent className="p-6 pt-0 flex-1 flex flex-col">
-                <div className="flex-1 space-y-6 overflow-y-auto pr-4 -mr-4">
-                    {displayMessages.map((message, index) => (
-                        <div key={index} className={cn("flex items-start gap-4", message.role === 'user' ? 'justify-end' : '')}>
-                            {message.role === 'model' && <Bot className="h-8 w-8 text-primary flex-shrink-0" />}
-                            <div className={cn("max-w-lg rounded-xl p-4 text-sm whitespace-pre-wrap", message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted')}>
-                                {message.content}
-                            </div>
-                            {message.role === 'user' && <User className="h-8 w-8 text-muted-foreground flex-shrink-0" />}
-                        </div>
-                    ))}
-                    <div ref={messagesEndRef} />
-                     {isLoading && (
-                        <div className="flex items-center gap-4 p-4">
-                            <Bot className="h-8 w-8 text-primary flex-shrink-0 animate-pulse" />
-                            <div className="bg-muted p-4 rounded-xl">
-                                <LoadingSpinner className="h-5 w-5" />
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </CardContent>
-            <div className="p-4 border-t">
-                <form onSubmit={handleSendMessage} className="relative">
-                    <Textarea
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        placeholder={user ? "Ask me anything about your career path..." : "Please log in to chat with the mentor."}
-                        className="pr-20 min-h-[52px] resize-none"
-                        disabled={isLoading || !user}
-                    />
-                    <div className="absolute top-1/2 right-3 -translate-y-1/2 flex items-center gap-2">
-                        <p className="text-xs text-muted-foreground hidden md:block">
-                            <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
-                                <span className="text-xs">Shift +</span><CornerDownLeft className="h-3 w-3" />
-                            </kbd> for new line
-                        </p>
-                        <Button type="submit" size="icon" disabled={isLoading || !input.trim() || !user}>
-                            <Send className="h-5 w-5" />
-                            <span className="sr-only">Send Message</span>
-                        </Button>
-                    </div>
-                </form>
-            </div>
-          </Card>
-        </div>
-      </main>
-    </div>
-  );
-}
+);

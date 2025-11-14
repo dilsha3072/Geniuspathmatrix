@@ -1,15 +1,11 @@
-
 'use client';
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, Bot, ClipboardCheck, Compass, Goal, Database } from 'lucide-react';
+import { ArrowRight, Bot, ClipboardCheck, Compass, Goal } from 'lucide-react';
 import * as React from 'react';
 import { AppHeader } from '@/components/layout/app-header';
-import { seedDatabase } from '@/lib/actions';
-import { useToast } from '@/hooks/use-toast';
-import { LoadingSpinner } from '@/components/loading-spinner';
 
 const featureCards = [
     {
@@ -43,26 +39,6 @@ const featureCards = [
 ]
 
 export default function Home() {
-    const { toast } = useToast();
-    const [isSeeding, setIsSeeding] = React.useState(false);
-
-    const handleSeed = async () => {
-        setIsSeeding(true);
-        const result = await seedDatabase();
-        if (result.success) {
-            toast({
-                title: 'Database Seeded!',
-                description: 'The necessary application data has been loaded into Firestore.',
-            });
-        } else {
-            toast({
-                variant: 'destructive',
-                title: 'Seeding Failed',
-                description: result.error || 'Could not seed the database.',
-            });
-        }
-        setIsSeeding(false);
-    };
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -75,15 +51,9 @@ export default function Home() {
                     <p className="text-lg text-muted-foreground max-w-3xl">
                         Path-GeniX™ is here to guide you through a structured, personalized, and metacognitive career discovery journey. Let's build your future, Today.
                     </p>
-                    <div className="flex flex-wrap gap-4">
-                        <Button size="lg" asChild className="font-semibold">
-                           <Link href="/assessment">Begin Your Journey <ArrowRight /></Link>
-                        </Button>
-                        <Button size="lg" variant="outline" onClick={handleSeed} disabled={isSeeding}>
-                            {isSeeding ? <LoadingSpinner className="mr-2" /> : <Database className="mr-2" />}
-                            Seed Database
-                        </Button>
-                    </div>
+                    <Button size="lg" asChild className="font-semibold">
+                       <Link href="/assessment">Begin Your Journey <ArrowRight /></Link>
+                    </Button>
                 </div>
 
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -111,5 +81,3 @@ export default function Home() {
     </div>
   );
 }
-
-    

@@ -11,7 +11,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { LoadingSpinner } from '@/components/loading-spinner';
-import { getCareerSuggestions, sendParentQuiz, getUserData, getAppData } from '@/lib/actions';
+import { getCareerSuggestions, sendParentQuiz } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 import { AlertCircle, ArrowLeft, ArrowRight, CalendarIcon, Clock, Mail, FileCheck } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -21,7 +21,67 @@ import { cn } from '@/lib/utils';
 import { format, differenceInYears } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/auth-context';
-import type { AssessmentSectionInfo, AssessmentData, AssessmentQuestion } from '@/lib/types';
+import { getUserData } from '@/lib/actions';
+
+const assessmentSections = [
+  { id: 'personality', title: 'Personality Test', questions: 10, time: 15, instructions: 'Rate how much you agree or disagree with the following statements about yourself.' },
+  { id: 'interest', title: 'Interest Profiler', questions: 10, time: 15, instructions: 'Rate how much you like or dislike the following activities.' },
+  { id: 'cognitive', title: 'Cognitive & Skill Assessment', questions: 10, time: 20, instructions: 'This section has two parts. Answer the multiple-choice cognitive questions and then rate your confidence in the listed skills.' },
+  { id: 'cvq', title: 'Career Values Quiz', questions: 10, time: 10, instructions: 'Rate how important the following values are to you in a career.' }
+];
+
+const assessmentQuestions = {
+  personality: [
+    { id: 'p1', question: 'I am the life of the party.' },
+    { id: 'p2', question: 'I am always prepared.' },
+    { id: 'p3', question: 'I get stressed out easily.' },
+    { id: 'p4', question: 'I have a rich vocabulary.' },
+    { id: 'p5', question: 'I am not interested in other people\'s problems.' },
+    { id: 'p6', question: 'I leave my belongings around.' },
+    { id: 'p7', question: 'I am relaxed most of the time.' },
+    { id: 'p8', question: 'I have difficulty understanding abstract ideas.' },
+    { id: 'p9', question: 'I feel comfortable around people.' },
+    { id: 'p10', question: 'I pay attention to details.' }
+  ],
+  interest: [
+    { id: 'i1', question: 'Building kitchen cabinets' },
+    { id: 'i2', question: 'Developing a new medicine' },
+    { id: 'i3', question: 'Writing books or plays' },
+    { id: 'i4', question: 'Teaching school' },
+    { id: 'i5', question: 'Buying and selling stocks and bonds' },
+    { id: 'i6', question: 'Operating a copy machine' },
+    { id: 'i7', question: 'Assembling electronic parts' },
+    { id: 'i8', question: 'Doing scientific experiments' },
+    { id: 'i9', question: 'Singing in a band' },
+    { id: 'i10', question: 'Helping people with personal or emotional problems' }
+  ],
+  cognitive: [
+    { id: 'c1', question: 'Which number logically follows this series? 4, 6, 9, 6, 14, 6, ...', options: ['6', '17', '19', '21'] },
+    { id: 'c2', question: 'A is B\'s sister. C is B\'s mother. D is C\'s father. E is D\'s mother. Then, how is A related to D?', options: ['Grandfather', 'Grandmother', 'Daughter', 'Granddaughter'] },
+    { id: 'c3', question: 'An animal shelter has a 30% discount on all cats, and a 10% discount on all dogs. If a cat costs $100 and a dog costs $150, what is the total cost for one of each?', options: ['$200', '$205', '$210', '$215'] },
+    { id: 'c4', question: 'If you rearrange the letters \'CIFAIPC\' you would have the name of a(n):', options: ['City', 'Animal', 'Ocean', 'River'] },
+    { id: 'c5', question: 'What is the missing number in the series? 2, 5, 10, 17, ?, 37', options: ['24', '26', '28', '30'] }
+  ],
+  skillMapping: [
+    { id: 's1', question: 'Analyzing data and drawing conclusions' },
+    { id: 's2', question: 'Leading a team to achieve a goal' },
+    { id: 's3', question: 'Coming up with creative ideas' },
+    { id: 's4', question: 'Organizing your work and managing time effectively' },
+    { id: 's5', question: 'Persuading or influencing others' }
+  ],
+  cvq: [
+    { id: 'v1', section: 'Independence', question: 'I want to be able to make my own decisions.' },
+    { id: 'v2', section: 'Independence', question: 'I want to be able to work on my own.' },
+    { id: 'v3', section: 'Support', question: 'I want a supervisor who backs up the workers with management.' },
+    { id: 'v4', section: 'Support', question: 'I want the company to administer its policies fairly.' },
+    { id: 'v5', section: 'Relationships', question: 'I want to have co-workers who are easy to get along with.' },
+    { id: 'v6', section: 'Relationships', question: 'I want to be able to do things for other people.' },
+    { id: 'v7', section: 'Working Conditions', question: 'I want to have a job where I do not have to worry about being laid off.' },
+    { id: 'v8', section: 'Working Conditions', question: 'I want to be busy all the time.' },
+    { id: 'v9', section: 'Achievement', question: 'I want to make use of my abilities and skills.' },
+    { id: 'v10', section: 'Achievement', question: 'I want to have a sense of accomplishment from my job.' }
+  ]
+};
 
 const ratingLabels = {
   personality: [
@@ -128,30 +188,8 @@ export default function AssessmentPage() {
   const [timeLeft, setTimeLeft] = React.useState(3600); // 60 minutes in seconds
   const [isTestActive, setIsTestActive] = React.useState(false);
   const { toast } = useToast();
-
-  const [assessmentData, setAssessmentData] = React.useState<{sections: AssessmentSectionInfo[], questions: AssessmentData} | null>(null);
-  const [isDataLoading, setIsDataLoading] = React.useState(true);
   
   const submittedRef = React.useRef(false);
-
-  React.useEffect(() => {
-    async function loadData() {
-        setIsDataLoading(true);
-        try {
-            const res = await getAppData('assessment');
-            if (res.success && res.data) {
-                setAssessmentData(res.data as any);
-            } else {
-                toast({ variant: 'destructive', title: 'Could not load assessment data.', description: res.error || 'Please try seeding the database from the home page.' });
-            }
-        } catch (e) {
-            toast({ variant: 'destructive', title: 'Error loading assessment data.' });
-        } finally {
-            setIsDataLoading(false);
-        }
-    }
-    loadData();
-  }, [toast]);
 
   React.useEffect(() => {
     if (!authLoading && !user) {
@@ -180,14 +218,13 @@ export default function AssessmentPage() {
   }, []);
 
   const handleNext = React.useCallback(() => {
-    if (!assessmentData) return;
-    const totalSteps = assessmentData.sections.length + 2;
+    const totalSteps = assessmentSections.length + 2;
     setCurrentStep(prev => Math.min(prev + 1, totalSteps));
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [assessmentData]);
+  }, []);
   
   const handleSubmit = React.useCallback(async () => {
-    if (submittedRef.current || !assessmentData) return;
+    if (submittedRef.current) return;
     submittedRef.current = true;
 
     if (!user) {
@@ -211,11 +248,11 @@ export default function AssessmentPage() {
         place,
         schoolOrCollege,
       },
-      personality: Object.entries(answers.personality).map(([k, v]) => `${assessmentData.questions.personality.find(q=>q.id===k)?.question}: ${ratingLabels.personality.find(l=>l.value===v)?.label}`).join('; '),
-      interest: Object.entries(answers.interest).map(([k, v]) => `${assessmentData.questions.interest.find(q=>q.id===k)?.question}: ${ratingLabels.interest.find(l=>l.value===v)?.label}`).join('; '),
-      cognitiveAbilities: Object.entries(answers.cognitiveAbilities).map(([k, v]) => `${assessmentData.questions.cognitive.find(q=>q.id===k)?.question}: ${v}`).join('; '),
-      selfReportedSkills: Object.entries(answers.selfReportedSkills).map(([k, v]) => `${assessmentData.questions.skillMapping.find(q=>q.id===k)?.question}: ${ratingLabels.skillMapping.find(l=>l.value===v)?.label}`).join('; '),
-      cvq: Object.entries(answers.cvq).map(([k, v]) => `${assessmentData.questions.cvq.find(q=>q.id===k)?.question}: ${ratingLabels.cvq.find(l=>l.value===v)?.label}`).join('; '),
+      personality: Object.entries(answers.personality).map(([k, v]) => `${assessmentQuestions.personality.find(q=>q.id===k)?.question}: ${ratingLabels.personality.find(l=>l.value===v)?.label}`).join('; '),
+      interest: Object.entries(answers.interest).map(([k, v]) => `${assessmentQuestions.interest.find(q=>q.id===k)?.question}: ${ratingLabels.interest.find(l=>l.value===v)?.label}`).join('; '),
+      cognitiveAbilities: Object.entries(answers.cognitiveAbilities).map(([k, v]) => `${assessmentQuestions.cognitive.find(q=>q.id===k)?.question}: ${v}`).join('; '),
+      selfReportedSkills: Object.entries(answers.selfReportedSkills).map(([k, v]) => `${assessmentQuestions.skillMapping.find(q=>q.id===k)?.question}: ${ratingLabels.skillMapping.find(l=>l.value===v)?.label}`).join('; '),
+      cvq: Object.entries(answers.cvq).map(([k, v]) => `${assessmentQuestions.cvq.find(q=>q.id===k)?.question}: ${ratingLabels.cvq.find(l=>l.value===v)?.label}`).join('; '),
       userId: user.uid,
     };
     
@@ -245,7 +282,7 @@ export default function AssessmentPage() {
       });
       submittedRef.current = false;
     }
-  }, [user, answers, router, toast, waitForReport, dob, gender, classOfStudy, place, schoolOrCollege, assessmentData]);
+  }, [user, answers, router, toast, waitForReport, dob, gender, classOfStudy, place, schoolOrCollege]);
   
   React.useEffect(() => {
     if (!isTestActive) return;
@@ -314,33 +351,13 @@ export default function AssessmentPage() {
     setIsSendingQuiz(false);
   }, [user, parentEmail, parentPhone, toast, handleNext]);
   
-  if (authLoading || !user || isDataLoading) {
+  if (authLoading || !user) {
     return (
       <div className="flex h-screen items-center justify-center">
         <LoadingSpinner className="h-12 w-12" />
       </div>
     );
   }
-
-  if (!assessmentData) {
-      return (
-        <div className="flex min-h-0 flex-1 flex-col">
-            <AppHeader title="InsightX Assessment" />
-             <main className="flex-1 p-4 md:p-6 lg:p-8 flex items-center justify-center">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Assessment Not Available</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p>The assessment data could not be loaded. Please try again later or contact support.</p>
-                    </CardContent>
-                </Card>
-            </main>
-        </div>
-      )
-  }
-
-  const { sections: assessmentSections, questions: assessmentQuestions } = assessmentData;
 
   const renderStep = () => {
     if (currentStep === 1) { // General Information Step
@@ -518,7 +535,7 @@ export default function AssessmentPage() {
           );
           break;
         case 'cvq':
-          const cvqSections: {[key: string]: AssessmentQuestion[]} = {};
+          const cvqSections: {[key: string]: typeof assessmentQuestions.cvq} = {};
           assessmentQuestions.cvq.forEach(q => {
             if (!q.section) return;
             if (!cvqSections[q.section]) cvqSections[q.section] = [];
@@ -676,5 +693,3 @@ export default function AssessmentPage() {
     </div>
   );
 }
-
-    

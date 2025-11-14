@@ -30,16 +30,5 @@ service cloud.firestore {
         // Disallow read, update, or delete from the client-side for privacy.
         allow read, update, delete: if false;
     }
-
-    // App Data collection: Stores dynamic app content like questions.
-    match /app_data/{docId} {
-      // Anyone can read this data.
-      allow read: if true;
-      // Allow writes only from authenticated users (for seeding).
-      // In production, this should be restricted to admin users.
-      allow write: if request.auth != null;
-    }
   }
 }
-
-    

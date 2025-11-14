@@ -1,9 +1,4 @@
 
-// import type { SuggestCareersOutput } from "@/ai/flows/ai-career-suggestions";
-// import type { SwotAnalysisOutput } from "@/ai/flows/swot-analysis-for-career";
-// import type { GenerateGoalsOutput } from "@/ai/flows/generate-goals-flow";
-
-// Mock types since AI flows are removed
 export type CareerSuggestion = {
   careerName: string;
   careerDescription: string;
@@ -31,4 +26,40 @@ export interface CareerPath {
     minEducation: string;
     responsibilities: string[];
     skillMatch: { skill: string; match: number }[];
+}
+
+
+// From assessment/page.tsx
+export type AssessmentQuestion = { 
+  id: string; 
+  question: string; 
+  options?: string[];
+  section?: string;
+};
+
+export type AssessmentData = {
+  personality: AssessmentQuestion[];
+  interest: AssessmentQuestion[];
+  cognitive: AssessmentQuestion[];
+  skillMapping: AssessmentQuestion[];
+  cvq: AssessmentQuestion[];
+}
+
+export type AssessmentSectionInfo = {
+  id: string;
+  title: string;
+  questions: number;
+  time: number;
+  instructions: string;
+};
+
+// From reports/page.tsx
+export type ReportInfo = {
+  id: string;
+  title: string;
+  description: string;
+  requiresAssessment: boolean;
+  requiresGoalPlan?: boolean;
+  date: Date | null;
+  isAvailable: boolean;
 }

@@ -1,9 +1,6 @@
 
 'use server';
 
-// import { suggestCareers, SuggestCareersInput } from '@/ai/flows/ai-career-suggestions';
-// import { generateGoalsForCareer, GenerateGoalsInput } from '@/ai/flows/generate-goals-flow';
-// import { getSocraticResponse, MentorInput } from '@/ai/flows/mentor-flow';
 import { adminDb } from '@/lib/firebase/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 
@@ -43,8 +40,7 @@ export async function getCareerSuggestions(input: SuggestCareersInput & { userId
     const userId = input.userId;
     if (!userId) throw new Error("User not authenticated.");
 
-    // 1. Get career suggestions from the AI flow
-    // const suggestions = await suggestCareers(input);
+    // This functionality was disabled to fix a build error.
     const suggestions = [{careerName: 'Mock Career', careerDescription: 'A mock career.', swotAnalysis: 'Strengths: Mock, Weaknesses: Mock, Opportunities: Mock, Threats: Mock', matchExplanation: 'This is a mock career.'}];
 
     // 2. Save assessment data and suggestions to the user's document
@@ -84,7 +80,7 @@ export async function getGeneratedGoals(input: GenerateGoalsInput & { userId: st
         const userId = input.userId;
         if (!userId) throw new Error("User not authenticated.");
 
-        // const goals = await generateGoalsForCareer(input);
+        // This functionality was disabled to fix a build error.
         const goals = {
             "1-year": [{title: 'Mock Goal 1', category: 'Academic', description: 'A mock academic goal.'}],
             "3-year": [{title: 'Mock Goal 2', category: 'Skill', description: 'A mock skill goal.'}],
@@ -146,7 +142,7 @@ export async function getMentorResponse(input: MentorInput & { userId: string })
     const userId = input.userId;
     if (!userId) throw new Error("User not authenticated.");
     
-    // const response = await getSocraticResponse(input);
+    // This functionality was disabled to fix a build error.
     const response = "This is a mock response from the mentor AI. The AI functionality has been temporarily disabled to resolve a dependency issue.";
     
     const userDocRef = adminDb.collection("users").doc(userId);
@@ -200,6 +196,22 @@ export async function getUserData(userId: string) {
     } catch (error) {
         console.error('Error fetching user data:', error);
         const errorMessage = error instanceof Error ? error.message : 'Failed to fetch user data.';
+        return { success: false, error: errorMessage };
+    }
+}
+
+export async function getAppData(docId: string) {
+    try {
+        const docRef = adminDb.collection("app_data").doc(docId);
+        const docSnap = await docRef.get();
+        if (docSnap.exists) {
+            return { success: true, data: docSnap.data() };
+        } else {
+            return { success: true, data: null };
+        }
+    } catch (error) {
+        console.error(`Error fetching app_data/${docId}:`, error);
+        const errorMessage = error instanceof Error ? error.message : 'Failed to fetch app data.';
         return { success: false, error: errorMessage };
     }
 }

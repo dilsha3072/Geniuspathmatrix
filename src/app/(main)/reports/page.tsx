@@ -9,40 +9,13 @@ import { Download, Info } from 'lucide-react';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/auth-context';
-import { getUserData } from '@/lib/actions';
+import { getUserData, getAppData } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-
-const initialReports = [
-    {
-        id: 'insightx',
-        title: "InsightX Report",
-        description: "A detailed breakdown of your personality, interests, and cognitive assessment results.",
-        requiresAssessment: true,
-    },
-    {
-        id: 'pathxplore',
-        title: "PathXplore Report",
-        description: "An in-depth analysis of your top career matches, including SWOT analysis and match explanations.",
-        requiresAssessment: true,
-    },
-    {
-        id: 'goalmint',
-        title: "GoalMint Planner",
-        description: "Your complete 1, 3, and 5-year SMART goal roadmap for your chosen career path.",
-        requiresGoalPlan: true,
-    },
-    {
-        id: 'matrix',
-        title: "Path-GeniX Career Mastery MatriX",
-        description: "A comprehensive summary matrix of your entire journey, from assessment to goals.",
-        requiresAssessment: true,
-    }
-].map(report => ({ ...report, date: null as Date | null, isAvailable: false }));
-
+import type { ReportInfo } from '@/lib/types';
 
 export default function ReportsPage() {
-  const [reports, setReports] = React.useState(initialReports);
+  const [reports, setReports] = React.useState<ReportInfo[]>([]);
   const { user, loading: authLoading } = useAuth();
   const [isLoading, setIsLoading] = React.useState(true);
   const { toast } = useToast();
@@ -50,23 +23,27 @@ export default function ReportsPage() {
   React.useEffect(() => {
     async function loadData() {
         if(authLoading) return;
-        if (!user) {
-            setIsLoading(false);
-            setReports(initialReports.map(r => ({...r, date: null, isAvailable: false})));
-            return;
-        }
 
         setIsLoading(true);
         try {
-            const res = await getUserData(user.uid);
-            const hasAssessmentData = !!res.data?.careerSuggestions;
-            const hasGoalPlan = !!res.data?.goalPlan;
-            const generationDate = res.data?.assessment?.updatedAt ? new Date(res.data.assessment.updatedAt) : new Date();
+            const appDataRes = await getAppData('reports');
+            const initialReports: Omit<ReportInfo, 'date' | 'isAvailable'>[] = appDataRes.data?.list || [];
+
+            if (!user) {
+                setReports(initialReports.map(r => ({...r, date: null, isAvailable: false})));
+                setIsLoading(false);
+                return;
+            }
+
+            const userRes = await getUserData(user.uid);
+            const hasAssessmentData = !!userRes.data?.careerSuggestions;
+            const hasGoalPlan = !!userRes.data?.goalPlan;
+            const generationDate = userRes.data?.assessment?.updatedAt ? new Date(userRes.data.assessment.updatedAt) : new Date();
 
             setReports(initialReports.map(report => {
                 let isAvailable = false;
                 if (report.requiresAssessment) isAvailable = hasAssessmentData;
-                if (report.requiresGoalPlan) isAvailable = hasGoalPlan;
+                if (report.requiresGoalPlan) isAvailable = hasGoalPlan && hasAssessmentData;
 
                 return { 
                     ...report, 
@@ -81,7 +58,7 @@ export default function ReportsPage() {
               title: 'Could not load data',
               description: 'There was a problem loading your user data.',
             });
-            setReports(initialReports.map(r => ({...r, date: null, isAvailable: false})));
+            setReports([]);
         } finally {
             setIsLoading(false);
         }

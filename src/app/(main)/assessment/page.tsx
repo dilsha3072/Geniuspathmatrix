@@ -11,7 +11,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { LoadingSpinner } from '@/components/loading-spinner';
-import { getCareerSuggestions, sendParentQuiz, getUserData } from '@/lib/actions';
+import { getCareerSuggestions, sendParentQuiz, getUserData, getAppData } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 import { AlertCircle, ArrowLeft, ArrowRight, CalendarIcon, Clock, Mail, FileCheck } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -21,39 +21,7 @@ import { cn } from '@/lib/utils';
 import { format, differenceInYears } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/auth-context';
-
-const assessmentSections = [
-  {
-    id: 'personality',
-    title: 'Personality Assessment',
-    questions: 30,
-    time: 15, // This is now just an estimate
-    instructions: 'Rate how much each statement describes you on a scale of 1 (Disagree) to 4 (Agree).',
-  },
-  {
-    id: 'interest',
-    title: 'Interest Inventory',
-    questions: 20,
-    time: 10, // This is now just an estimate
-    instructions: 'Indicate how much you would enjoy performing each activity on a scale of 1 (Dislike) to 4 (Like).',
-  },
-  {
-    id: 'cognitive',
-    title: 'Cognitive Capability + Skill Mapping',
-    questions: 20, // 10 cognitive + 10 skill mapping
-    time: 20, // This is now just an estimate
-    instructions: 'This section has two parts. First, answer cognitive ability questions. Then, self-assess your skills.',
-  },
-  {
-    id: 'cvq',
-    title: 'Contextual Viability Quotient (CVQ™)',
-    questions: 10,
-    time: 12, // This is now just an estimate
-    instructions: 'Rate how much you agree with each statement on a scale of 1 (Disagree) to 4 (Agree).',
-  },
-];
-
-const totalSteps = assessmentSections.length + 2; // +1 for instructions, +1 for general info
+import type { AssessmentSectionInfo, AssessmentData, AssessmentQuestion } from '@/lib/types';
 
 const ratingLabels = {
   personality: [
@@ -79,99 +47,6 @@ const ratingLabels = {
     { value: '2', label: 'Disagree' },
     { value: '3', label: 'Agree' },
     { value: '4', label: 'Strongly Agree' },
-  ]
-};
-
-const assessmentQuestions = {
-  personality: [
-    { id: 'p1', question: 'I enjoy being the center of attention in a group.' },
-    { id: 'p2', question: 'I make sure my school assignments are neat and organized.' },
-    { id: 'p3', question: 'I love learning about new and unusual things.' },
-    { id: 'p4', question: 'I sometimes get anxious or worried about small things.' },
-    { id: 'p5', question: 'I try to be kind and considerate to everyone.' },
-    { id: 'p6', question: 'I always finish what I start, even if it\'s difficult.' },
-    { id: 'p7', question: 'I often come up with creative ideas for school projects or hobbies.' },
-    { id: 'p8', question: 'I am reliable and people can count on me.' },
-    { id: 'p9', question: 'I am good at understanding how others are feeling.' },
-    { id: 'p10', question: 'I tend to overthink things and get stressed.' },
-    { id: 'p11', question: 'I like to explore different cultures and ideas.' },
-    { id: 'p12', question: 'I enjoy taking charge when working on a group project.' },
-    { id: 'p13', question: 'I believe most people are honest and trustworthy.' },
-    { id: 'p14', question: 'I set high standards for myself in schoolwork.' },
-    { id: 'p15', question: 'I feel energized when I\'m around a lot of people.' },
-    { id: 'p16', question: 'I sometimes feel overwhelmed by my emotions.' },
-    { id: 'p17', question: 'I am very imaginative and like to daydream.' },
-    { id: 'p18', question: 'I prefer to stick to a schedule and routine.' },
-    { id: 'p19', question: 'I usually stay calm, even in stressful situations.' },
-    { id: 'p20', question: 'I prefer to spend my free time alone or with a few close friends.' },
-    { id: 'p21', question: 'I enjoy expressing myself through art, music, or writing.' },
-    { id: 'p22', question: 'I can usually handle unexpected problems without getting upset.' },
-    { id: 'p23', question: 'I like to think deeply about complex ideas.' },
-    { id: 'p24', question: 'I enjoy helping my friends or family when they have a problem.' },
-    { id: 'p25', question: 'My room or study space is often a bit messy.' },
-    { id: 'p26', question: 'I am curious about how things work and why people behave the way they do.' },
-    { id: 'p27', question: 'I prefer to work independently on school projects.' },
-    { id: 'p28', question: 'I get annoyed easily by small things.' },
-    { id: 'p29', question: 'I respect traditional ways of doing things.' },
-    { id: 'p30', question: 'I learn new things quickly.' },
-  ],
-  interest: [
-    { id: 'i1', question: 'Creating a new game or app idea for my phone.' },
-    { id: 'i2', question: 'Mentoring a younger student or helping a classmate with their studies.' },
-    { id: 'i3', question: 'Building or fixing things with my hands (e.g., models, electronics).' },
-    { id: 'i4', question: 'Organizing a school event or a group project.' },
-    { id: 'i5', question: 'Conducting experiments in a science lab.' },
-    { id: 'i6', question: 'Writing stories, poems, or creating digital art.' },
-    { id: 'i7', question: 'Keeping my notes and files perfectly organized.' },
-    { id: 'i8', question: 'Volunteering for a community service project.' },
-    { id: 'i9', question: 'Learning how machines or devices work.' },
-    { id: 'i10', question: 'Leading a club or a school group.' },
-    { id: 'i11', question: 'Researching a topic in depth for a school report.' },
-    { id: 'i12', question: 'Performing in a play, band, or debate.' },
-    { id: 'i13', question: 'Working with numbers and keeping track of finances (e.g., for a school club).' },
-    { id: 'i14', question: 'Helping people who are facing difficulties.' },
-    { id: 'i15', question: 'Designing and building something physical (e.g., a robot, a craft).' },
-    { id: 'i16', question: 'Convincing others to support an idea or project.' },
-    { id: 'i17', question: 'Solving complex math problems or logic puzzles.' },
-    { id: 'i18', question: 'Expressing my thoughts clearly in written essays or presentations.' },
-    { id: 'i19', question: 'Working with plants or animals in a garden or farm.' },
-    { id: 'i20', question: 'Imagining new inventions or solutions to problems.' },
-  ],
-  cognitive: [
-      { id: 'cog1', question: 'Which word is the odd one out:', options: ['Apple', 'Banana', 'Carrot', 'Orange'] },
-      { id: 'cog2', question: 'Complete the series: 2, 4, 8, 16, ?', options: ['20', '24', '32', '36'] },
-      { id: 'cog3', question: 'If a bird is to flying as a fish is to ____?', options: ['Swimming', 'Jumping', 'Eating', 'Singing'] },
-      { id: 'cog4', question: 'Which shape comes next in the sequence: Triangle, Square, Pentagon, ?', options: ['Hexagon', 'Heptagon', 'Circle', 'Star'] },
-      { id: 'cog5', question: 'A cyclist travels 10 km in 20 minutes. How far will they travel in 1 hour?', options: ['10 km', '20 km', '30 km', '40 km'] },
-      { id: 'cog6', question: 'Find the missing number: 1, 3, 6, 10, ?', options: ['13', '14', '15', '16'] },
-      { id: 'cog7', question: 'Which word is the odd one out:', options: ['Book', 'Pen', 'Eraser', 'Desk'] },
-      { id: 'cog8', question: 'If all students are learners, and all learners are curious, then all students are curious. True or False?', options: ['True', 'False', 'Cannot Say', 'Irrelevant'] },
-      { id: 'cog9', question: 'Which of the following is the next logical step in the pattern: AB, CD, EF, GH, ?', options: ['IJ', 'KL', 'JK', 'HI'] },
-      { id: 'cog10', question: 'If you rearrange the letters \'TINAP\', you would have the name of a(n):', options: ['Animal', 'Fruit', 'Color', 'Country'] },
-  ],
-  skillMapping: [
-      { id: 'sm1', question: 'I am confident sharing my ideas in front of my class.' },
-      { id: 'sm2', question: 'I can quickly figure out how to use a new app or software.' },
-      { id: 'sm3', question: 'I am good at explaining difficult topics to my friends.' },
-      { id: 'sm4', question: 'I often think of unique ways to do school projects.' },
-      { id: 'sm5', question: 'I keep my school bag and study area organized.' },
-      { id: 'sm6', question: 'I enjoy working with others on group assignments.' },
-      { id: 'sm7', question: 'I am good at solving brain teasers or riddles.' },
-      { id: 'sm8', question: 'I can adjust easily when plans change unexpectedly.' },
-      { id: 'sm9', question: 'I am good at writing clear and persuasive essays.' },
-      { id: 'sm10', question: 'I feel comfortable giving presentations or speeches.' },
-  ],
-  cvq: [
-    { id: 'cvq1', section: 'Cultural & Societal Compatibility', question: 'I am free to pursue any career, regardless of family traditions or expectations.' },
-    { id: 'cvq2', section: 'Cultural & Societal Compatibility', question: 'My family does not interfere in my career decision-making.' },
-    { id: 'cvq6', section: 'Language Readiness (Current + Future)', question: 'I can currently read, write, and speak in English or the required career language.' },
-    { id: 'cvq7', section: 'Language Readiness (Current + Future)', question: 'I understand lectures, videos, or tutorials in English without needing translations.' },
-    { id: 'cvq11', section: 'Digital Access & Tech Confidence', question: 'I have regular access to a smartphone with internet.' },
-    { id: 'cvq12', section: 'Digital Access & Tech Confidence', question: 'I have access to a laptop or desktop at least 3 days per week.' },
-    { id: 'cvq13', section: 'Digital Access & Tech Confidence', question: 'I feel confident using online learning platforms and productivity tools.' },
-    { id: 'cvq18', section: 'Financial & Geographic Readiness', question: 'I am willing to apply for scholarships or part-time jobs to support my career goals.' },
-    { id: 'cvq19', section: 'Financial & Geographic Readiness', question: 'I am willing to relocate to another city/state/country for education or work.' },
-    { id: 'cvq23', section: 'Parental & Familial Support', question: 'I feel comfortable discussing my career aspirations openly with my parents.' },
   ]
 };
 
@@ -253,8 +128,30 @@ export default function AssessmentPage() {
   const [timeLeft, setTimeLeft] = React.useState(3600); // 60 minutes in seconds
   const [isTestActive, setIsTestActive] = React.useState(false);
   const { toast } = useToast();
+
+  const [assessmentData, setAssessmentData] = React.useState<{sections: AssessmentSectionInfo[], questions: AssessmentData} | null>(null);
+  const [isDataLoading, setIsDataLoading] = React.useState(true);
   
   const submittedRef = React.useRef(false);
+
+  React.useEffect(() => {
+    async function loadData() {
+        setIsDataLoading(true);
+        try {
+            const res = await getAppData('assessment');
+            if (res.success && res.data) {
+                setAssessmentData(res.data as any);
+            } else {
+                toast({ variant: 'destructive', title: 'Could not load assessment data.' });
+            }
+        } catch (e) {
+            toast({ variant: 'destructive', title: 'Error loading assessment data.' });
+        } finally {
+            setIsDataLoading(false);
+        }
+    }
+    loadData();
+  }, [toast]);
 
   React.useEffect(() => {
     if (!authLoading && !user) {
@@ -283,12 +180,14 @@ export default function AssessmentPage() {
   }, []);
 
   const handleNext = React.useCallback(() => {
+    if (!assessmentData) return;
+    const totalSteps = assessmentData.sections.length + 2;
     setCurrentStep(prev => Math.min(prev + 1, totalSteps));
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []);
+  }, [assessmentData]);
   
   const handleSubmit = React.useCallback(async () => {
-    if (submittedRef.current) return;
+    if (submittedRef.current || !assessmentData) return;
     submittedRef.current = true;
 
     if (!user) {
@@ -312,11 +211,11 @@ export default function AssessmentPage() {
         place,
         schoolOrCollege,
       },
-      personality: Object.entries(answers.personality).map(([k, v]) => `${assessmentQuestions.personality.find(q=>q.id===k)?.question}: ${ratingLabels.personality.find(l=>l.value===v)?.label}`).join('; '),
-      interest: Object.entries(answers.interest).map(([k, v]) => `${assessmentQuestions.interest.find(q=>q.id===k)?.question}: ${ratingLabels.interest.find(l=>l.value===v)?.label}`).join('; '),
-      cognitiveAbilities: Object.entries(answers.cognitiveAbilities).map(([k, v]) => `${assessmentQuestions.cognitive.find(q=>q.id===k)?.question}: ${v}`).join('; '),
-      selfReportedSkills: Object.entries(answers.selfReportedSkills).map(([k, v]) => `${assessmentQuestions.skillMapping.find(q=>q.id===k)?.question}: ${ratingLabels.skillMapping.find(l=>l.value===v)?.label}`).join('; '),
-      cvq: Object.entries(answers.cvq).map(([k, v]) => `${assessmentQuestions.cvq.find(q=>q.id===k)?.question}: ${ratingLabels.cvq.find(l=>l.value===v)?.label}`).join('; '),
+      personality: Object.entries(answers.personality).map(([k, v]) => `${assessmentData.questions.personality.find(q=>q.id===k)?.question}: ${ratingLabels.personality.find(l=>l.value===v)?.label}`).join('; '),
+      interest: Object.entries(answers.interest).map(([k, v]) => `${assessmentData.questions.interest.find(q=>q.id===k)?.question}: ${ratingLabels.interest.find(l=>l.value===v)?.label}`).join('; '),
+      cognitiveAbilities: Object.entries(answers.cognitiveAbilities).map(([k, v]) => `${assessmentData.questions.cognitive.find(q=>q.id===k)?.question}: ${v}`).join('; '),
+      selfReportedSkills: Object.entries(answers.selfReportedSkills).map(([k, v]) => `${assessmentData.questions.skillMapping.find(q=>q.id===k)?.question}: ${ratingLabels.skillMapping.find(l=>l.value===v)?.label}`).join('; '),
+      cvq: Object.entries(answers.cvq).map(([k, v]) => `${assessmentData.questions.cvq.find(q=>q.id===k)?.question}: ${ratingLabels.cvq.find(l=>l.value===v)?.label}`).join('; '),
       userId: user.uid,
     };
     
@@ -346,7 +245,7 @@ export default function AssessmentPage() {
       });
       submittedRef.current = false;
     }
-  }, [user, answers, router, toast, waitForReport, dob, gender, classOfStudy, place, schoolOrCollege]);
+  }, [user, answers, router, toast, waitForReport, dob, gender, classOfStudy, place, schoolOrCollege, assessmentData]);
   
   React.useEffect(() => {
     if (!isTestActive) return;
@@ -415,13 +314,30 @@ export default function AssessmentPage() {
     setIsSendingQuiz(false);
   }, [user, parentEmail, parentPhone, toast, handleNext]);
   
-  if (authLoading || !user) {
+  if (authLoading || !user || isDataLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <LoadingSpinner className="h-12 w-12" />
       </div>
     );
   }
+
+  if (!assessmentData) {
+      return (
+          <div className="flex h-screen items-center justify-center">
+              <Card>
+                  <CardHeader>
+                      <CardTitle>Assessment Not Available</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                      <p>The assessment data could not be loaded. Please try again later.</p>
+                  </CardContent>
+              </Card>
+          </div>
+      )
+  }
+
+  const { sections: assessmentSections, questions: assessmentQuestions } = assessmentData;
 
   const renderStep = () => {
     if (currentStep === 1) { // General Information Step
@@ -599,8 +515,9 @@ export default function AssessmentPage() {
           );
           break;
         case 'cvq':
-          const cvqSections: {[key: string]: typeof assessmentQuestions.cvq} = {};
+          const cvqSections: {[key: string]: AssessmentQuestion[]} = {};
           assessmentQuestions.cvq.forEach(q => {
+            if (!q.section) return;
             if (!cvqSections[q.section]) cvqSections[q.section] = [];
             cvqSections[q.section].push(q);
           });
@@ -738,7 +655,7 @@ export default function AssessmentPage() {
                         <ArrowLeft className="mr-2 h-4 w-4" /> Back
                     </Button>
                     {isLastAssessmentStep ? (
-                        <Button onClick={handleSubmit} disabled={isLoading} size="lg">
+                        <Button onClick={handleSubmit} disabled={isLoading}>
                             {isLoading ? <LoadingSpinner className="mr-2"/> : <FileCheck className="mr-2" />}
                             Submit & Get My Results
                         </Button>

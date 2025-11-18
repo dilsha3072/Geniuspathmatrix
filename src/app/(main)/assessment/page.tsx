@@ -393,7 +393,7 @@ export default function AssessmentPage() {
                                 {dob ? format(dob, "PPP") : <span>Pick a date</span>}
                               </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" onFocusOutside={(e) => e.preventDefault()} onPointerDownOutside={(e) => e.preventDefault()}>
+                            <PopoverContent className="w-auto p-0">
                               <Calendar
                                 mode="single"
                                 selected={dob}

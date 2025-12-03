@@ -62,6 +62,7 @@ ${studentProfile || 'No profile data available.'}
 `;
 
     const { output } = await ai.generate({
+      model: 'googleai/gemini-1.5-flash-latest',
       system: systemPrompt,
       prompt: messages,
       tools: [getEducationOptions],

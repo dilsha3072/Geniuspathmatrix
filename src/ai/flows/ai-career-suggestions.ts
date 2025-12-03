@@ -12,11 +12,11 @@ import { z } from 'genkit';
 import { getSWOTAnalysisForCareer } from './swot-analysis-for-career';
 
 const SuggestCareersInputSchema = z.object({
-  personality: z.string().describe('A summary of the student\'s personality assessment results.'),
-  interest: z.string().describe('A summary of the student\'s interest profiler results.'),
-  cognitiveAbilities: z.string().describe('A summary of the student\'s cognitive ability test results, including specific answers.'),
-  selfReportedSkills: z.string().describe('A summary of the student\'s self-reported skill confidence levels.'),
-  cvq: z.string().describe('A summary of the student\'s career values quiz results.'),
+  personality: z.string().describe("A summary of the student's personality assessment results."),
+  interest: z.string().describe("A summary of the student's interest profiler results."),
+  cognitiveAbilities: z.string().describe("A summary of the student's cognitive ability test results, including specific answers."),
+  selfReportedSkills: z.string().describe("A summary of the student's self-reported skill confidence levels."),
+  cvq: z.string().describe("A summary of the student's career values quiz results."),
 });
 export type SuggestCareersInput = z.infer<typeof SuggestCareersInputSchema>;
 
@@ -60,10 +60,10 @@ You will be provided with the following information about the student:
 2.  **Interest Profile**: Based on the Holland Codes (RIASEC).
 3.  **Cognitive Abilities**: Results from logical reasoning, verbal ability, and problem-solving tests.
 4.  **Self-Reported Skills**: The student's confidence in various skills.
-5.  **Career Values Quiz (CVQ)**: What the student values most in a work environment.
+5.  **Career Values Quotient (CVQ)**: What the student values most in a work environment.
 
 Your Task:
-1.  **Analyze Holistically**: Synthesize all the provided data points to create a comprehensive understanding of the student. Do not focus on just one area.
+1.  **Analyze Holistically**: Synthesize all the provided data points to create a comprehensive understanding of the student. Do not focus on just one area. A great suggestion lies at the intersection of personality, interest, and ability.
 2.  **Identify Top 5 Careers**: Based on your analysis, identify the top 5 career paths that are the best fit for the student.
 3.  **Generate Detailed Suggestions**: For each of the 5 careers, you must provide:
     *   \`careerName\`: The specific title of the career.
@@ -73,6 +73,7 @@ Your Task:
 Your output MUST be a JSON array of 5 career suggestion objects. Do not include any introductory text or conversational filler.`;
 
     const { output } = await ai.generate({
+      model: 'googleai/gemini-1.5-flash-latest',
       system: systemPrompt,
       prompt: `Here is the student's data: ${JSON.stringify(studentData)}`,
       output: { schema: SuggestCareersOutputSchema },

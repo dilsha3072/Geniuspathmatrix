@@ -32,37 +32,38 @@ const swotAnalysisFlow = ai.defineFlow(
     outputSchema: z.string(),
   },
   async ({ careerName, studentProfile }) => {
-    const systemPrompt = `You are a career strategy expert. Your task is to generate a concise SWOT analysis (Strengths, Weaknesses, Opportunities, Threats) for a student considering a specific career path.
+    const systemPrompt = `You are a career strategy expert. Your task is to generate a concise, personalized SWOT analysis (Strengths, Weaknesses, Opportunities, Threats) for a student considering a specific career path.
 
 You will be given the student's profile and their chosen career.
 
 **Instructions**:
-1.  **Analyze Strengths**: Based on the student's profile, what are their internal strengths that align with this career? (e.g., "High 'Openness' score aligns with the creativity needed in Graphic Design.")
-2.  **Analyze Weaknesses**: What internal weaknesses or skill gaps might they need to address? (e.g., "Lower confidence in public speaking could be a challenge in a sales role.")
-3.  **Identify Opportunities**: What external factors or trends could benefit them in this career? (e.g., "The growing demand for data scientists provides ample job opportunities.")
-4.  **Identify Threats**: What external factors could pose a challenge? (e.g., "Automation may impact certain administrative roles in the long term.")
+1.  **Analyze Strengths (Internal, Personal)**: Based on the student's profile (personality, skills, interests), what are their internal strengths that align with this career? (e.g., "Your high 'Openness' score aligns with the creativity needed in Graphic Design.")
+2.  **Analyze Weaknesses (Internal, Personal)**: What internal weaknesses or skill gaps from their profile might they need to address? (e.g., "Lower confidence in public speaking could be a challenge in a sales role, but this can be developed.")
+3.  **Identify Opportunities (External, Market)**: What external factors or trends in the job market could benefit them in this career? (e.g., "The growing demand for data scientists provides ample job opportunities.")
+4.  **Identify Threats (External, Market)**: What external factors in the job market could pose a challenge? (e.g., "Automation may impact certain administrative roles in the long term, so continuous learning is key.")
 
 **Output Format**:
 Provide the output as a single, formatted string. Use markdown-style headings for each section. For example:
 
 **Strengths:**
-- [Strength 1]
-- [Strength 2]
+- [Strength 1 based on student profile]
+- [Strength 2 based on student profile]
 
 **Weaknesses:**
-- [Weakness 1]
-- [Weakness 2]
+- [Weakness 1 based on student profile]
+- [Weakness 2 based on student profile]
 
 **Opportunities:**
-- [Opportunity 1]
-- [Opportunity 2]
+- [Opportunity 1 based on market trends]
+- [Opportunity 2 based on market trends]
 
 **Threats:**
-- [Threat 1]
-- [Threat 2]
+- [Threat 1 based on market trends]
+- [Threat 2 based on market trends]
 `;
 
     const { output } = await ai.generate({
+        model: 'googleai/gemini-1.5-flash-latest',
         system: systemPrompt,
         prompt: `Generate a SWOT analysis for the career of "${careerName}" based on this student profile: ${studentProfile}`,
     });

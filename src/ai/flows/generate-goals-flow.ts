@@ -52,7 +52,7 @@ For each timeframe, you must generate a set of goals across three categories:
 
 **CRITICAL INSTRUCTIONS**:
 *   **SMART Goals**: Every goal must be Specific, Measurable, Achievable, Relevant, and Time-bound. The description for each goal must reflect this.
-*   **Personalization**: The goals must be highly relevant to the student's chosen career (${careerName}) and their unique profile (interests, skills, personality). Refer to the provided student profile to tailor your suggestions.
+*   **Personalization**: The goals must be highly relevant to the student's chosen career (${careerName}) and their unique profile (interests, skills, personality). Refer to the provided student profile to tailor your suggestions. For example, if the student has a weakness in a certain skill, a goal should be created to address it.
 *   **Action-Oriented**: Phrase goals in a way that encourages action.
 *   **Structured Output**: Your output must be a JSON object where the keys are the requested timeframes (e.g., "1-year", "3-year") and the value for each key is an array of goal objects. Each goal object must have an id, title, category, and a detailed SMART description.
 
@@ -67,6 +67,7 @@ For each timeframe, you must generate a set of goals across three categories:
 Analyze the student's profile and chosen career, then generate a detailed and actionable plan for the following timeframes: ${timeframes.join(', ')}.`;
 
     const { output } = await ai.generate({
+      model: 'googleai/gemini-1.5-flash-latest',
       system: systemPrompt,
       prompt: `Student Profile for ${careerName}: ${studentProfile}`,
       output: { schema: GenerateGoalsOutputSchema },

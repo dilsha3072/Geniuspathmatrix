@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { LoadingSpinner } from '@/components/loading-spinner';
 import { getCareerSuggestions, sendParentQuiz } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
-import { AlertCircle, ArrowLeft, ArrowRight, CalendarIcon, Clock, Mail } from 'lucide-react';
+import { AlertCircle, ArrowLeft, ArrowRight, Calendar as CalendarIcon, Clock, Mail } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -335,11 +335,11 @@ export default function AssessmentPage() {
         place,
         schoolOrCollege,
       },
-      personality: Object.entries(answers.personality).map(([k, v]) => `${assessmentQuestions.personality.find(q=>q.id===k)?.question}: ${ratingLabels.personality.find(l=>l.value===v)?.label}`).join('; '),
-      interest: Object.entries(answers.interest).map(([k, v]) => `${assessmentQuestions.interest.find(q=>q.id===k)?.question}: ${ratingLabels.interest.find(l=>l.value===v)?.label}`).join('; '),
-      cognitiveAbilities: Object.entries(answers.cognitiveAbilities).map(([k, v]) => `${assessmentQuestions.cognitive.find(q=>q.id===k)?.question}: ${v}`).join('; '),
-      selfReportedSkills: Object.entries(answers.selfReportedSkills).map(([k, v]) => `${assessmentQuestions.skillMapping.find(q=>q.id===k)?.question}: ${ratingLabels.skillMapping.find(l=>l.value===v)?.label}`).join('; '),
-      cvq: Object.entries(answers.cvq).map(([k, v]) => `${assessmentQuestions.cvq.find(q=>q.id===k)?.question}: ${ratingLabels.cvq.find(l=>l.value===v)?.label}`).join('; '),
+      personality: answers.personality,
+      interest: answers.interest,
+      cognitiveAbilities: answers.cognitiveAbilities,
+      selfReportedSkills: answers.selfReportedSkills,
+      cvq: answers.cvq,
       userId: user.uid,
     };
     
@@ -798,3 +798,5 @@ export default function AssessmentPage() {
     </div>
   );
 }
+
+    

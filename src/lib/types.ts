@@ -1,7 +1,4 @@
 
-// import type { CareerSuggestion as AiCareerSuggestion } from "@/ai/flows/ai-career-suggestions";
-
-// Using a placeholder type as the AI flow is removed
 export type CareerSuggestion = {
     careerName: string;
     careerDescription: string;
@@ -19,6 +16,10 @@ export type ReportInfo = {
     isAvailable: boolean;
 };
 
+export type MentorMessage = {
+    role: 'user' | 'model';
+    content: string;
+};
 
 export type SwotAnalysis = any;
 export type GoalPlan = Record<string, Goal[]>;
@@ -42,3 +43,5 @@ export interface CareerPath {
     responsibilities: string[];
     skillMatch: { skill: string; match: number }[];
 }
+
+    

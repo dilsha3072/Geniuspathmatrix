@@ -10,22 +10,15 @@ import { Send, User, Bot, CornerDownLeft } from 'lucide-react';
 import { getMentorResponse, getUserData } from '@/lib/actions';
 import { LoadingSpinner } from '@/components/loading-spinner';
 import { cn } from '@/lib/utils';
-// import type { Message } from '@/ai/flows/mentor-flow';
-import type { CareerSuggestion, GoalPlan } from '@/lib/types';
+import type { CareerSuggestion, GoalPlan, MentorMessage } from '@/lib/types';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
-
-// Mock type as AI flow is removed
-type Message = {
-    role: 'user' | 'model';
-    content: string;
-};
 
 export default function MentorsPage() {
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
-  const [messages, setMessages] = React.useState<Message[]>([]);
-  const initialMessage: Message = {
+  const [messages, setMessages] = React.useState<MentorMessage[]>([]);
+  const initialMessage: MentorMessage = {
     role: 'model',
     content: "Hello! I am your MentorSuite AI, a Socratic mirror designed to help you reflect on your career path. What's on your mind today?",
   };
@@ -101,7 +94,7 @@ export default function MentorsPage() {
     e?.preventDefault();
     if (!input.trim() || isLoading || !user) return;
 
-    const userMessage: Message = { role: 'user', content: input };
+    const userMessage: MentorMessage = { role: 'user', content: input };
     const currentMessages = [...messages, userMessage];
     setMessages(currentMessages);
     setInput('');
@@ -110,10 +103,10 @@ export default function MentorsPage() {
     const result = await getMentorResponse({ messages: currentMessages, studentProfile, userId: user.uid });
     
     if (result.success && result.data) {
-        const modelMessage: Message = { role: 'model', content: result.data };
+        const modelMessage: MentorMessage = { role: 'model', content: result.data };
         setMessages(prev => [...prev, modelMessage]);
     } else {
-        const errorMessage: Message = { role: 'model', content: "I'm sorry, I encountered an error and couldn't process your message. Please try again." };
+        const errorMessage: MentorMessage = { role: 'model', content: "I'm sorry, I encountered an error and couldn't process your message. Please try again." };
         setMessages(prev => [...prev, errorMessage]);
          toast({
             variant: 'destructive',
@@ -208,3 +201,5 @@ export default function MentorsPage() {
     </div>
   );
 }
+
+    

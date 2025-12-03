@@ -2,7 +2,7 @@
 'use server';
 
 import { adminDb } from '@/lib/firebase/firebase-admin';
-import type { GoalPlan, CareerSuggestion } from './types';
+import type { GoalPlan, CareerSuggestion, MentorMessage } from './types';
 import { FieldValue } from 'firebase-admin/firestore';
 
 
@@ -16,11 +16,11 @@ type GeneralInfo = {
 };
 
 type SuggestCareersInput = {
-    personality: string;
-    interest: string;
-    cognitiveAbilities: string;
-    selfReportedSkills: string;
-    cvq: string;
+    personality: Record<string, string>;
+    interest: Record<string, string>;
+    cognitiveAbilities: Record<string, string>;
+    selfReportedSkills: Record<string, string>;
+    cvq: Record<string, string>;
 }
 
 type GenerateGoalsInput = {
@@ -30,7 +30,7 @@ type GenerateGoalsInput = {
 }
 
 type MentorInput = {
-    messages: { role: 'user' | 'model', content: string }[];
+    messages: MentorMessage[];
     studentProfile: string;
 }
 
@@ -68,7 +68,6 @@ export async function getEmailForUsername(username: string): Promise<{ success: 
     }
 
     const usersRef = adminDb.collection('users');
-    // Usernames are stored in lowercase to ensure case-insensitive uniqueness
     const snapshot = await usersRef.where('username', '==', username).limit(1).get();
 
     if (snapshot.empty) {
@@ -150,13 +149,20 @@ export async function getCareerSuggestions(input: SuggestCareersInput & { userId
 
     // 3. Generate and save the summary report
     const reportDocRef = adminDb.collection("reports").doc(userId);
+    
+    // Create summaries from the structured data
+    const personalitySummary = `Summary of personality responses: ${Object.keys(input.personality).length} questions answered.`;
+    const interestSummary = `Summary of interest responses: ${Object.keys(input.interest).length} questions answered.`;
+    const cognitiveSummary = `Summary of cognitive & skills responses: ${Object.keys(input.cognitiveAbilities).length + Object.keys(input.selfReportedSkills).length} questions answered.`;
+    const cvqSummary = `Summary of CVQ responses: ${Object.keys(input.cvq).length} questions answered.`;
+
     const reportData = {
         userId: userId,
         assessmentSummary: {
-            personality: input.personality?.substring(0, 100) + '...', // Store a summary
-            interest: input.interest?.substring(0, 100) + '...',
-            cognitiveAbilities: input.cognitiveAbilities?.substring(0, 100) + '...',
-            cvq: input.cvq?.substring(0, 100) + '...',
+            personality: personalitySummary,
+            interest: interestSummary,
+            cognitiveAbilities: cognitiveSummary,
+            cvq: cvqSummary,
         },
         generatedAt: FieldValue.serverTimestamp(),
     };
@@ -282,7 +288,11 @@ export async function getUserData(userId: string) {
             if (data) {
                 // A simple and safe way to convert all timestamps in a nested object
                 const serializableData = JSON.parse(JSON.stringify(data, (key, value) => {
-                    if (value && value.toDate) { // Check if it's a Firestore Timestamp
+                    // Check if it's a Firestore Timestamp-like object
+                    if (value && typeof value === 'object' && value.hasOwnProperty('_seconds') && value.hasOwnProperty('_nanoseconds')) {
+                        return new Date(value._seconds * 1000 + value._nanoseconds / 1000000).toISOString();
+                    }
+                    if (value && value.toDate) { // Fallback for actual Timestamp objects if they slip through
                         return value.toDate().toISOString();
                     }
                     return value;
@@ -316,3 +326,5 @@ export async function getAppData(docId: string) {
         return { success: false, error: errorMessage };
     }
 }
+
+    

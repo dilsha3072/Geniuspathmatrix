@@ -140,7 +140,7 @@ export default function PathXplorePage() {
   const handleGenerateReport = () => {
     toast({
       title: 'Report Generated!',
-      description: 'Your PathXplore report can be downloaded from the Reports page.',
+      description: 'Your PathXplore report can be downloaded from the My Reports page.',
     });
     // In a real app, this might trigger a server-side PDF generation
   }

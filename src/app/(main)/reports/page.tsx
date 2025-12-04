@@ -44,7 +44,7 @@ export default function ReportsPage() {
             setReports(initialReports.map(report => {
                 let isAvailable = false;
                 if (report.requiresAssessment) isAvailable = hasAssessmentData;
-                if (report.requiresGoalPlan) isAvailable = hasGoalPlan && hasAssessmentData;
+                if (report.requiresGoalPlan) isAvailable = isAvailable && hasGoalPlan;
 
                 return { 
                     ...report, 
@@ -77,7 +77,7 @@ export default function ReportsPage() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <AppHeader title="Reports" />
+      <AppHeader title="My Reports" />
       <main className="flex-1 p-4 md:p-6 lg:p-8">
         <div className="max-w-4xl mx-auto">
           <div className="space-y-1 mb-8">

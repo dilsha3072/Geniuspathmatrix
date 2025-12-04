@@ -27,7 +27,7 @@ const navItems = [
   { href: '/pathxplore', icon: Compass, label: 'PathXplore Career' },
   { href: '/goals', icon: Goal, label: 'GoalMint Planner' },
   { href: '/mentors', icon: Bot, label: 'MentorSuite AI' },
-  { href: '/reports', icon: FileText, label: 'Reports' },
+  { href: '/reports', icon: FileText, label: 'My Reports' },
 ];
 
 export function AppSidebar() {
